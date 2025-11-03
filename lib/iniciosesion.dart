@@ -80,7 +80,9 @@ class InicioSesion extends StatelessWidget {
               ),
               SizedBox(height: 50),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushNamed(context, '/menu');
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.yellow,
                   foregroundColor: Colors.black,

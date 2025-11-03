@@ -1,4 +1,5 @@
 import 'package:comexiger_app/iniciosesion.dart';
+import 'package:comexiger_app/menu.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -12,7 +13,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       initialRoute: '/iniciosesion',
-      routes: {'/iniciosesion': (context) => InicioSesion()},
+      routes: {
+        '/iniciosesion': (context) => InicioSesion(),
+        '/menu': (context) => Menu(),
+      },
     );
   }
 }
