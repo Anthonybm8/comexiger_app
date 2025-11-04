@@ -125,7 +125,7 @@ class Menu extends StatelessWidget {
                   SizedBox(height: 50),
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.pushNamed(context, '/menu');
+                      Navigator.pushNamed(context, '/jornada');
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.yellow,

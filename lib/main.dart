@@ -1,4 +1,5 @@
 import 'package:comexiger_app/iniciosesion.dart';
+import 'package:comexiger_app/jornada.dart';
 import 'package:comexiger_app/menu.dart';
 import 'package:comexiger_app/rendimiento.dart';
 import 'package:comexiger_app/stock.dart';
@@ -20,6 +21,7 @@ class MyApp extends StatelessWidget {
         '/menu': (context) => Menu(),
         '/rendimiento': (context) => Rendimiento(),
         '/stock': (context) => Stock(),
+        '/jornada': (context) => Jornada(),
       },
     );
   }
