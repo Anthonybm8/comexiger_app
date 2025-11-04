@@ -1,5 +1,6 @@
 import 'package:comexiger_app/iniciosesion.dart';
 import 'package:comexiger_app/menu.dart';
+import 'package:comexiger_app/rendimiento.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -16,6 +17,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/iniciosesion': (context) => InicioSesion(),
         '/menu': (context) => Menu(),
+        '/rendimiento': (context) => Rendimiento(),
       },
     );
   }
