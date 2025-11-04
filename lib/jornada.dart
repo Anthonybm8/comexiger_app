@@ -75,7 +75,7 @@ class Jornada extends StatelessWidget {
 
               SizedBox(height: 20),
               Text(
-                "PRESIONE EN INICIAR O FINALIZAR LA JORNADA LABORAL",
+                "PRESIONE EN INICIAR O FINALIZAR LA JORNADA LABORAL.",
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
