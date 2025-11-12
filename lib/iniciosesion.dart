@@ -96,6 +96,20 @@ class InicioSesion extends StatelessWidget {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
+              SizedBox(height: 20),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, '/usuarioregistro');
+                },
+                child: Text(
+                  "Registrarse aquí",
+                  style: TextStyle(
+                    color: Colors.yellow,
+                    fontSize: 15,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
             ],
           ),
         ),

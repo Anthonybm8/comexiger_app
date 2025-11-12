@@ -1,8 +1,10 @@
+import 'package:comexiger_app/etiquetas.dart';
 import 'package:comexiger_app/iniciosesion.dart';
 import 'package:comexiger_app/jornada.dart';
 import 'package:comexiger_app/menu.dart';
 import 'package:comexiger_app/rendimiento.dart';
 import 'package:comexiger_app/stock.dart';
+import 'package:comexiger_app/usuarioregistro.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -22,6 +24,8 @@ class MyApp extends StatelessWidget {
         '/rendimiento': (context) => Rendimiento(),
         '/stock': (context) => Stock(),
         '/jornada': (context) => Jornada(),
+        '/etiquetas': (context) => Etiquetas(),
+        '/usuarioregistro': (context) => UsuarioRegistro(),
       },
     );
   }
