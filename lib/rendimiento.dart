@@ -17,8 +17,8 @@ class Rendimiento extends StatelessWidget {
               SizedBox(height: 5),
 
               SizedBox(
-                width: 350,
-                height: 200,
+                width: 300,
+                height: 150,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(50),
                   child: Image.asset("assets/logo.jpg", fit: BoxFit.contain),

@@ -3,6 +3,164 @@ import 'package:flutter/material.dart';
 class Jornada extends StatelessWidget {
   const Jornada({super.key});
 
+  void _mostrarDialogoIniciar(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: Text(
+            "Iniciar Jornada",
+            style: TextStyle(color: Colors.yellow, fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            "¿Está seguro de que desea empezar la jornada laboral?",
+            style: TextStyle(color: Colors.white),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar diálogo (NO)
+              },
+              child: Text(
+                "NO",
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar diálogo
+                _mostrarMensajeJornadaIniciada(context);
+              },
+              child: Text(
+                "SÍ",
+                style: TextStyle(
+                  color: Colors.green,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _mostrarDialogoFinalizar(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: Text(
+            "Finalizar Jornada",
+            style: TextStyle(color: Colors.yellow, fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            "¿Está seguro de que desea finalizar la jornada laboral?",
+            style: TextStyle(color: Colors.white),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar diálogo (NO)
+              },
+              child: Text(
+                "NO",
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cerrar diálogo
+                _mostrarMensajeJornadaFinalizada(context);
+              },
+              child: Text(
+                "SÍ",
+                style: TextStyle(
+                  color: Colors.green,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _mostrarMensajeJornadaIniciada(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        Future.delayed(Duration(seconds: 2), () {
+          Navigator.of(
+            context,
+          ).pop(); // Cerrar automáticamente después de 2 segundos
+        });
+
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.check_circle, color: Colors.green, size: 50),
+              SizedBox(height: 15),
+              Text(
+                "Jornada Iniciada",
+                style: TextStyle(
+                  color: Colors.green,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _mostrarMensajeJornadaFinalizada(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        Future.delayed(Duration(seconds: 2), () {
+          Navigator.of(
+            context,
+          ).pop(); // Cerrar automáticamente después de 2 segundos
+        });
+
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.check_circle, color: Colors.green, size: 50),
+              SizedBox(height: 15),
+              Text(
+                "Jornada Finalizada",
+                style: TextStyle(
+                  color: Colors.green,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,7 +224,7 @@ class Jornada extends StatelessWidget {
               SizedBox(height: 30),
               SizedBox(
                 width: 300,
-                height: 200,
+                height: 150,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: Image.asset("assets/flores.jpg", fit: BoxFit.cover),
@@ -89,13 +247,15 @@ class Jornada extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      _mostrarDialogoIniciar(context);
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.yellow,
                       foregroundColor: Colors.black,
                       padding: EdgeInsets.symmetric(
-                        horizontal: 25,
-                        vertical: 20,
+                        horizontal: 20,
+                        vertical: 15,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -118,13 +278,15 @@ class Jornada extends StatelessWidget {
                   ),
 
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      _mostrarDialogoFinalizar(context);
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.yellow,
                       foregroundColor: Colors.black,
                       padding: EdgeInsets.symmetric(
-                        horizontal: 25,
-                        vertical: 20,
+                        horizontal: 20,
+                        vertical: 15,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
