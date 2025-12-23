@@ -9,25 +9,19 @@ class Etiquetas extends StatefulWidget {
 }
 
 class _EtiquetasState extends State<Etiquetas> {
-  // Variables para controlar los dropdowns y campo de texto
   String? _variedadSeleccionada;
   String? _mesaSeleccionada;
-
-  // Controlador para el campo de texto de unidad
+  String? _medidaSeleccionada;
   final TextEditingController _unidadController = TextEditingController();
-
-  // Variable para almacenar el contenido del QR
   String _qrData = "Esperando datos...";
 
-  // Listas de opciones
   final List<String> _variedades = ['Mandala', 'Fruteto', 'Mondial'];
-
   final List<String> _mesas = ['Mesa 1', 'Mesa 2', 'Mesa 3', 'Mesa 4'];
+  final List<String> _medidas = ['40', '50', '60', '70', '80', '90', 'OPE'];
 
   @override
   void initState() {
     super.initState();
-    // Escuchar cambios en los campos para actualizar el QR
     _unidadController.addListener(_actualizarQR);
   }
 
@@ -38,17 +32,17 @@ class _EtiquetasState extends State<Etiquetas> {
     super.dispose();
   }
 
-  // Función para actualizar el QR cuando cambian los datos
   void _actualizarQR() {
     if (_variedadSeleccionada != null &&
         _unidadController.text.isNotEmpty &&
-        _mesaSeleccionada != null) {
-      // Formatear los datos para el QR
+        _mesaSeleccionada != null &&
+        _medidaSeleccionada != null) {
       setState(() {
         _qrData =
             "Variedad: $_variedadSeleccionada\n"
             "Unidad: ${_unidadController.text}\n"
             "Mesa: $_mesaSeleccionada\n"
+            "Medida: $_medidaSeleccionada\n"
             "Fecha: ${DateTime.now().toString().split(' ')[0]}\n"
             "ID: ${DateTime.now().millisecondsSinceEpoch}";
       });
@@ -57,6 +51,25 @@ class _EtiquetasState extends State<Etiquetas> {
         _qrData = "Esperando datos...";
       });
     }
+  }
+
+  String _obtenerFechaFormateada() {
+    final ahora = DateTime.now();
+    final meses = [
+      'Ene',
+      'Feb',
+      'Mar',
+      'Abr',
+      'May',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dic',
+    ];
+    return "${ahora.day} ${meses[ahora.month - 1]} ${ahora.year}";
   }
 
   @override
@@ -124,91 +137,134 @@ class _EtiquetasState extends State<Etiquetas> {
                   ),
                 ),
                 SizedBox(height: 40),
-                // Contenedor del QR
+                // ETIQUETA CIRCULAR
                 Container(
-                  width: 200,
-                  height: 200,
+                  width: 280,
+                  height: 280,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.grey, width: 2),
-                  ),
-                  child: Center(
-                    child:
-                        _variedadSeleccionada != null &&
-                            _unidadController.text.isNotEmpty &&
-                            _mesaSeleccionada != null
-                        ? QrImageView(
-                            data: _qrData,
-                            version: QrVersions.auto,
-                            size: 180,
-                            backgroundColor: Colors.white,
-                            eyeStyle: QrEyeStyle(
-                              eyeShape: QrEyeShape.square,
-                              color: Colors.black,
-                            ),
-                            dataModuleStyle: QrDataModuleStyle(
-                              dataModuleShape: QrDataModuleShape.square,
-                              color: Colors.black,
-                            ),
-                          )
-                        : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.qr_code_scanner,
-                                size: 60,
-                                color: Colors.grey[400],
-                              ),
-                              SizedBox(height: 10),
-                              Text(
-                                "Complete los datos",
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 14,
-                                ),
-                              ),
-                              Text(
-                                "para generar QR",
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                  ),
-                ),
-                SizedBox(height: 20),
-                // Texto que muestra los datos del QR
-                Container(
-                  width: 250,
-                  padding: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[900],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        "Datos del QR:",
-                        style: TextStyle(
-                          color: Colors.yellow,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        _qrData,
-                        style: TextStyle(color: Colors.white, fontSize: 12),
-                        textAlign: TextAlign.center,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.yellow.withOpacity(0.3),
+                        blurRadius: 15,
+                        spreadRadius: 2,
                       ),
                     ],
                   ),
+                  child:
+                      _variedadSeleccionada != null &&
+                          _unidadController.text.isNotEmpty &&
+                          _mesaSeleccionada != null &&
+                          _medidaSeleccionada != null
+                      ? Padding(
+                          padding: const EdgeInsets.all(15),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // QR Code
+                              Container(
+                                width: 140,
+                                height: 140,
+                                child: QrImageView(
+                                  data: _qrData,
+                                  version: QrVersions.auto,
+                                  size: 140,
+                                  backgroundColor: Colors.white,
+                                  eyeStyle: QrEyeStyle(
+                                    eyeShape: QrEyeShape.square,
+                                    color: Colors.black,
+                                  ),
+                                  dataModuleStyle: QrDataModuleStyle(
+                                    dataModuleShape: QrDataModuleShape.square,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 10),
+                              // Variedad
+                              Text(
+                                _variedadSeleccionada!,
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              SizedBox(height: 6),
+                              // Mesa y Medida
+                              Text(
+                                "$_mesaSeleccionada | Medida: $_medidaSeleccionada",
+                                style: TextStyle(
+                                  color: Colors.grey[800],
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.qr_code_scanner,
+                              size: 80,
+                              color: Colors.grey[400],
+                            ),
+                            SizedBox(height: 15),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 30),
+                              child: Text(
+                                "Complete los datos\npara generar\nla etiqueta",
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ),
                 ),
-                SizedBox(height: 20),
-                // Contenedor de Variedad con Dropdown
+                SizedBox(height: 30),
+                // Información de la etiqueta
+                if (_variedadSeleccionada != null &&
+                    _unidadController.text.isNotEmpty &&
+                    _mesaSeleccionada != null &&
+                    _medidaSeleccionada != null)
+                  Container(
+                    width: 280,
+                    padding: EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[900],
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(color: Colors.yellow, width: 2),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          "Información de etiqueta",
+                          style: TextStyle(
+                            color: Colors.yellow,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Divider(color: Colors.yellow.withOpacity(0.3)),
+                        _buildInfoRow("Variedad:", _variedadSeleccionada!),
+                        _buildInfoRow("Unidad:", _unidadController.text),
+                        _buildInfoRow("Mesa:", _mesaSeleccionada!),
+                        _buildInfoRow("Medida:", _medidaSeleccionada!),
+                        _buildInfoRow("Fecha:", _obtenerFechaFormateada()),
+                      ],
+                    ),
+                  ),
+                SizedBox(height: 30),
+                // Contenedor de Variedad
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -282,7 +338,7 @@ class _EtiquetasState extends State<Etiquetas> {
                   ),
                 ),
                 SizedBox(height: 30),
-                // Contenedor de Unidad (campo de texto) y Mesa (dropdown)
+                // Contenedor de Unidad y Mesa
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -302,7 +358,6 @@ class _EtiquetasState extends State<Etiquetas> {
                         ),
                       ),
                       SizedBox(height: 10),
-                      // Campo de texto para unidad (solo números)
                       TextField(
                         controller: _unidadController,
                         keyboardType: TextInputType.number,
@@ -333,10 +388,8 @@ class _EtiquetasState extends State<Etiquetas> {
                         ),
                         style: TextStyle(color: Colors.black, fontSize: 16),
                         onChanged: (value) {
-                          // Validación para permitir solo números
                           if (value.isNotEmpty &&
                               !RegExp(r'^[0-9]+$').hasMatch(value)) {
-                            // Remover caracteres no numéricos
                             _unidadController.text = value.replaceAll(
                               RegExp(r'[^0-9]'),
                               '',
@@ -411,6 +464,66 @@ class _EtiquetasState extends State<Etiquetas> {
                           ),
                         ),
                       ),
+                      SizedBox(height: 20),
+                      Text(
+                        "Medida:",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            value: _medidaSeleccionada,
+                            hint: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 15),
+                              child: Text(
+                                "Select...",
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                            icon: Padding(
+                              padding: EdgeInsets.only(right: 15),
+                              child: Icon(
+                                Icons.arrow_drop_down,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            items: _medidas.map((String medida) {
+                              return DropdownMenuItem<String>(
+                                value: medida,
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 15),
+                                  child: Text(
+                                    medida,
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                _medidaSeleccionada = newValue;
+                              });
+                              _actualizarQR();
+                            },
+                            style: TextStyle(color: Colors.black),
+                            dropdownColor: Colors.white,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -418,11 +531,10 @@ class _EtiquetasState extends State<Etiquetas> {
                 // Botón IMPRIMIR
                 ElevatedButton(
                   onPressed: () {
-                    // Lógica para imprimir
                     if (_variedadSeleccionada == null ||
                         _unidadController.text.isEmpty ||
-                        _mesaSeleccionada == null) {
-                      // Mostrar mensaje de error si no se han completado todos los campos
+                        _mesaSeleccionada == null ||
+                        _medidaSeleccionada == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Por favor, complete todos los campos'),
@@ -430,27 +542,23 @@ class _EtiquetasState extends State<Etiquetas> {
                         ),
                       );
                     } else {
-                      // Aquí va la lógica de impresión
                       final unidad = _unidadController.text;
                       print('Variedad: $_variedadSeleccionada');
                       print('Unidad: $unidad');
                       print('Mesa: $_mesaSeleccionada');
+                      print('Medida: $_medidaSeleccionada');
                       print('QR Data: $_qrData');
 
-                      // Puedes mostrar un mensaje de éxito
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            'Etiquetas enviadas a impresión\n'
+                            'Etiqueta circular enviada a impresión\n'
                             'QR generado correctamente',
                           ),
                           backgroundColor: Colors.green,
                           duration: Duration(seconds: 3),
                         ),
                       );
-
-                      // Aquí podrías agregar la lógica de impresión real
-                      // Por ejemplo, enviar el QR a una impresora
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -471,6 +579,26 @@ class _EtiquetasState extends State<Etiquetas> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(color: Colors.grey[400], fontSize: 13)),
+          Text(
+            value,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }
