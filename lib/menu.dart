@@ -1,7 +1,53 @@
+import 'package:comexiger_app/settings/bluetooth_permission.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 
-class Menu extends StatelessWidget {
+class Menu extends StatefulWidget {
   const Menu({super.key});
+
+  @override
+  State<Menu> createState() => _MenuState();
+}
+
+class _MenuState extends State<Menu> {
+  @override
+  void initState() {
+    super.initState();
+    _checkBluetoothPermissions();
+  }
+
+  Future<void> _checkBluetoothPermissions() async {
+    final granted = await BluetoothPermission.request();
+    print('Bluetooth permitido: $granted');
+
+    if (!granted && mounted) {
+      _showPermissionDialog();
+    }
+  }
+
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Permiso requerido'),
+        content: const Text(
+          'La aplicación necesita Bluetooth para funcionar correctamente.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              openAppSettings();
+            },
+            child: const Text('Ir a ajustes'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
