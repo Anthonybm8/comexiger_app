@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/usuario_model.dart';
+import '../models/mesa_model.dart';
 import '../repositories/usuario_repository.dart';
 
 class UsuarioRegistro extends StatefulWidget {
@@ -11,49 +12,78 @@ class UsuarioRegistro extends StatefulWidget {
 
 class _UsuarioRegistroState extends State<UsuarioRegistro> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  // Elimina esta línea si usas métodos static:
-  // final UsuarioRepository _repo = UsuarioRepository(); // ❌ ELIMINA
-
-  // Controllers
   final TextEditingController _nombresController = TextEditingController();
   final TextEditingController _apellidosController = TextEditingController();
-  final TextEditingController _mesaController = TextEditingController();
   final TextEditingController _cargoController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
-  String? _selectedMesa;
+  MesaModel? _selectedMesa;
   bool _isLoading = false;
-  final List<String> _mesas = [
-    'Mesa 1',
-    'Mesa 2',
-    'Mesa 3',
-    'Mesa 4',
-    'Mesa 5',
-    'Mesa 6',
-    'Administrador',
-  ];
+  bool _isLoadingMesas = false;
+  List<MesaModel> _mesas = [];
+  String _errorMesas = '';
 
   @override
-  void dispose() {
-    _nombresController.dispose();
-    _apellidosController.dispose();
-    _mesaController.dispose();
-    _cargoController.dispose();
-    _usernameController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _cargarMesas();
+  }
+
+  Future<void> _cargarMesas() async {
+    if (mounted) {
+      setState(() {
+        _isLoadingMesas = true;
+        _errorMesas = '';
+      });
+    }
+
+    try {
+      final resultado = await UsuarioRepository.obtenerMesas();
+
+      if (mounted) {
+        if (resultado['success'] == true) {
+          final List<dynamic> mesasData = resultado['mesas'] ?? [];
+          setState(() {
+            _mesas = mesasData.map((json) => MesaModel.fromJson(json)).toList();
+            debugPrint('📋 Mesas cargadas: ${_mesas.length}');
+            // Si solo hay una mesa, seleccionarla automáticamente
+            if (_mesas.length == 1) {
+              _selectedMesa = _mesas[0];
+            }
+          });
+        } else {
+          setState(() {
+            _errorMesas = resultado['message'] ?? 'Error al cargar mesas';
+            debugPrint('❌ Error cargando mesas: $_errorMesas');
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMesas = 'Error: $e';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingMesas = false);
+      }
+    }
   }
 
   Future<void> _registrarUsuario() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Validar contraseñas coinciden
     if (_passwordController.text != _confirmPasswordController.text) {
       _mostrarError('Las contraseñas no coinciden');
+      return;
+    }
+
+    if (_selectedMesa == null) {
+      _mostrarError('Debe seleccionar una mesa');
       return;
     }
 
@@ -63,26 +93,19 @@ class _UsuarioRegistroState extends State<UsuarioRegistro> {
       final usuario = UsuarioModel(
         nombres: _nombresController.text.trim(),
         apellidos: _apellidosController.text.trim(),
-        mesa: _selectedMesa ?? _mesaController.text.trim(),
+        mesa: _selectedMesa!.nombre,
         cargo: _cargoController.text.trim(),
         username: _usernameController.text.trim(),
         password: _passwordController.text,
       );
 
-      // ✅ CORREGIDO: Usa UsuarioRepository.registrar() directamente
       final resultado = await UsuarioRepository.registrar(usuario);
 
       if (resultado['success'] == true) {
         _mostrarExito(resultado['message'] ?? 'Registro exitoso');
-
-        // Limpiar formulario
-        _limpiarFormulario(); // ✅ AGREGA ESTE MÉTODO
-
-        // Regresar después de 2 segundos
+        _limpiarFormulario();
         Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
-            Navigator.pop(context, true);
-          }
+          if (mounted) Navigator.pop(context, true);
         });
       } else {
         _mostrarError(resultado['message'] ?? 'Error en el registro');
@@ -96,12 +119,10 @@ class _UsuarioRegistroState extends State<UsuarioRegistro> {
     }
   }
 
-  // ✅ AGREGA ESTE MÉTODO FALTANTE:
   void _limpiarFormulario() {
     _formKey.currentState?.reset();
     _nombresController.clear();
     _apellidosController.clear();
-    _mesaController.clear();
     _cargoController.clear();
     _usernameController.clear();
     _passwordController.clear();
@@ -110,7 +131,6 @@ class _UsuarioRegistroState extends State<UsuarioRegistro> {
   }
 
   void _mostrarExito(String mensaje) {
-    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensaje),
@@ -121,7 +141,6 @@ class _UsuarioRegistroState extends State<UsuarioRegistro> {
   }
 
   void _mostrarError(String mensaje) {
-    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensaje),
@@ -129,6 +148,17 @@ class _UsuarioRegistroState extends State<UsuarioRegistro> {
         duration: const Duration(seconds: 4),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _nombresController.dispose();
+    _apellidosController.dispose();
+    _cargoController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -274,14 +304,24 @@ class _UsuarioRegistroState extends State<UsuarioRegistro> {
 
                       const SizedBox(height: 20),
 
-                      // Campo de Mesa (Dropdown) - ✅ CORREGIDO
+                      // Campo de Mesa (Dropdown) - ACTUALIZADO
                       Container(
                         margin: const EdgeInsets.symmetric(horizontal: 10),
-                        child: DropdownButtonFormField<String>(
+                        child: DropdownButtonFormField<MesaModel>(
                           value: _selectedMesa,
                           decoration: InputDecoration(
-                            hintText: "Seleccionar Mesa",
-                            hintStyle: const TextStyle(color: Colors.white70),
+                            hintText: _isLoadingMesas
+                                ? "Cargando mesas..."
+                                : (_mesas.isEmpty
+                                      ? "No hay mesas"
+                                      : "Seleccionar Mesa"),
+                            hintStyle: TextStyle(
+                              color: _isLoadingMesas
+                                  ? Colors.yellow
+                                  : (_mesas.isEmpty
+                                        ? Colors.orange
+                                        : Colors.white70),
+                            ),
                             enabledBorder: OutlineInputBorder(
                               borderSide: const BorderSide(
                                 color: Colors.white,
@@ -298,14 +338,28 @@ class _UsuarioRegistroState extends State<UsuarioRegistro> {
                             ),
                             fillColor: Colors.white12,
                             filled: true,
-                            prefixIcon: const Icon(
-                              Icons.table_restaurant,
-                              color: Colors.yellow,
-                            ),
+                            prefixIcon: _isLoadingMesas
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.yellow,
+                                      ),
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.table_restaurant,
+                                    color: Colors.yellow,
+                                  ),
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 15,
                               vertical: 18,
                             ),
+                            errorText: _errorMesas.isNotEmpty
+                                ? _errorMesas
+                                : null,
                           ),
                           dropdownColor: Colors.grey[900],
                           style: const TextStyle(
@@ -313,24 +367,75 @@ class _UsuarioRegistroState extends State<UsuarioRegistro> {
                             fontSize: 16,
                           ),
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
+                            if (value == null) {
                               return 'La mesa es requerida';
                             }
                             return null;
                           },
-                          items: _mesas.map((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
+                          items: _mesas.map((MesaModel mesa) {
+                            return DropdownMenuItem<MesaModel>(
+                              value: mesa,
+                              child: Text(
+                                mesa.nombre,
+                                style: const TextStyle(color: Colors.white),
+                              ),
                             );
                           }).toList(),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              _selectedMesa = newValue;
-                            });
-                          },
+                          onChanged: _isLoadingMesas || _mesas.isEmpty
+                              ? null
+                              : (MesaModel? newValue) {
+                                  setState(() {
+                                    _selectedMesa = newValue;
+                                  });
+                                },
+                          isExpanded: true,
                         ),
                       ),
+
+                      // Contador de mesas
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0, right: 20.0),
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            _isLoadingMesas
+                                ? "Cargando..."
+                                : "Mesas disponibles: ${_mesas.length}",
+                            style: TextStyle(
+                              color: _isLoadingMesas
+                                  ? Colors.yellow
+                                  : Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // Botón para recargar mesas si hay error
+                      if (_errorMesas.isNotEmpty || _mesas.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _isLoadingMesas ? null : _cargarMesas,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue[800],
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              icon: const Icon(Icons.refresh, size: 20),
+                              label: const Text('Reintentar cargar mesas'),
+                            ),
+                          ),
+                        ),
 
                       const SizedBox(height: 20),
 
@@ -543,7 +648,10 @@ class _UsuarioRegistroState extends State<UsuarioRegistro> {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                onPressed: _isLoading
+                                onPressed:
+                                    _isLoading ||
+                                        _isLoadingMesas ||
+                                        _mesas.isEmpty
                                     ? null
                                     : _registrarUsuario,
                                 style: ElevatedButton.styleFrom(
@@ -558,7 +666,7 @@ class _UsuarioRegistroState extends State<UsuarioRegistro> {
                                   ),
                                   elevation: 5,
                                   disabledBackgroundColor: Colors.green
-                                      .withAlpha(127), // ✅ CORREGIDO
+                                      .withAlpha(127),
                                 ),
                                 child: _isLoading
                                     ? const SizedBox(
@@ -612,7 +720,7 @@ class _UsuarioRegistroState extends State<UsuarioRegistro> {
                                   elevation: 5,
                                   disabledBackgroundColor: Colors.red.withAlpha(
                                     127,
-                                  ), // ✅ CORREGIDO
+                                  ),
                                 ),
                                 child: const Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -644,7 +752,7 @@ class _UsuarioRegistroState extends State<UsuarioRegistro> {
             // Loading overlay
             if (_isLoading)
               Container(
-                color: Colors.black.withAlpha(127), // ✅ CORREGIDO
+                color: Colors.black.withAlpha(127),
                 child: const Center(
                   child: CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.yellow),

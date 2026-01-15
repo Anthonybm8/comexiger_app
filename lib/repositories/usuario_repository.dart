@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/usuario_model.dart';
+// REMOVER ESTA LÍNEA: import '../models/mesa_model.dart';
 
 class UsuarioRepository {
   // 🎯 URL BASE - SIN 'Usuario/'
@@ -347,5 +348,85 @@ class UsuarioRepository {
     }
 
     print('\n=== PRUEBA COMPLETA FINALIZADA ===');
+  }
+
+  // ============================================
+  // 7. OBTENER LISTA DE MESAS DESDE DJANGO
+  // ============================================
+  static Future<Map<String, dynamic>> obtenerMesas() async {
+    final url = Uri.parse('$_baseUrl/api/mesas/');
+
+    print('📋 [REPOSITORY] Obteniendo lista de mesas');
+    print('🔗 URL: $url');
+
+    try {
+      final response = await http.get(url, headers: _headers);
+
+      print('📥 Código de estado: ${response.statusCode}');
+      print('📥 Respuesta: ${response.body}');
+
+      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+
+      if (response.statusCode == 200) {
+        print('✅ Mesas obtenidas correctamente');
+        return {
+          'success': true,
+          'mesas': responseData['data'],
+          'count': responseData['count'],
+        };
+      } else {
+        print('❌ Error al obtener mesas: ${responseData['error']}');
+        return {
+          'success': false,
+          'message': responseData['error'] ?? 'Error al obtener mesas',
+        };
+      }
+    } on http.ClientException catch (e) {
+      print('💥 CLIENT EXCEPTION: ${e.message}');
+      return {
+        'success': false,
+        'message': 'Error de conexión al obtener mesas: ${e.message}',
+      };
+    } on FormatException catch (e) {
+      print('💥 FORMAT EXCEPTION: ${e.message}');
+      return {'success': false, 'message': 'Error en formato de respuesta'};
+    } catch (e) {
+      print('💥 ERROR INESPERADO: $e');
+      return {'success': false, 'message': 'Error inesperado: $e'};
+    }
+  }
+
+  // ============================================
+  // 8. VERIFICAR SI UNA MESA EXISTE
+  // ============================================
+  static Future<Map<String, dynamic>> verificarMesa(String nombreMesa) async {
+    final url = Uri.parse('$_baseUrl/api/verificar_mesa/');
+
+    print('🔍 [REPOSITORY] Verificando mesa: $nombreMesa');
+    print('🔗 URL: $url');
+
+    try {
+      final body = jsonEncode({'nombre': nombreMesa});
+      final response = await http.post(url, headers: _headers, body: body);
+
+      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+
+      if (response.statusCode == 200) {
+        print('✅ Mesa verificada: ${responseData['existe']}');
+        return {
+          'success': true,
+          'existe': responseData['existe'],
+          'nombre': responseData['nombre'],
+        };
+      } else {
+        return {
+          'success': false,
+          'message': responseData['error'] ?? 'Error al verificar mesa',
+        };
+      }
+    } catch (e) {
+      print('💥 ERROR: $e');
+      return {'success': false, 'message': 'Error: $e'};
+    }
   }
 }
