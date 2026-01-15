@@ -2,7 +2,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/usuario_model.dart';
-// REMOVER ESTA LÍNEA: import '../models/mesa_model.dart';
+import '../models/jornada_model.dart';
 
 class UsuarioRepository {
   // 🎯 URL BASE - SIN 'Usuario/'
@@ -427,6 +427,245 @@ class UsuarioRepository {
     } catch (e) {
       print('💥 ERROR: $e');
       return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
+  // ============================================
+  // 9. INICIAR JORNADA LABORAL
+  // ============================================
+  static Future<Map<String, dynamic>> iniciarJornada({
+    required String usuarioUsername,
+    required String usuarioNombre,
+    required String mesa,
+  }) async {
+    final url = Uri.parse('$_baseUrl/api/jornada/iniciar/');
+
+    print('⏰ [REPOSITORY] Iniciando jornada laboral');
+    print('🔗 URL: $url');
+    print('👤 Usuario: $usuarioUsername');
+    print('📋 Mesa: $mesa');
+
+    try {
+      final body = jsonEncode({
+        'usuario_username': usuarioUsername,
+        'usuario_nombre': usuarioNombre,
+        'mesa': mesa,
+      });
+
+      final response = await http.post(url, headers: _headers, body: body);
+
+      print('📥 Código de estado: ${response.statusCode}');
+      print('📥 Respuesta: ${response.body}');
+
+      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+
+      if (response.statusCode == 201) {
+        print('✅ JORNADA INICIADA: ${responseData['message']}');
+        return {
+          'success': true,
+          'message': responseData['message'],
+          'jornada': JornadaModel.fromJson(responseData['data']),
+        };
+      } else if (response.statusCode == 400) {
+        print('❌ ERROR 400: ${responseData['error']}');
+        return {
+          'success': false,
+          'message': responseData['error'] ?? 'Error al iniciar jornada',
+          'jornada_actual': responseData['jornada_actual'] != null
+              ? JornadaModel.fromJson(responseData['jornada_actual'])
+              : null,
+        };
+      } else {
+        print('⚠️ ERROR: ${response.statusCode}');
+        return {
+          'success': false,
+          'message': responseData['error'] ?? 'Error al iniciar jornada',
+        };
+      }
+    } on http.ClientException catch (e) {
+      print('💥 CLIENT EXCEPTION: ${e.message}');
+      return {
+        'success': false,
+        'message': 'Error de conexión al iniciar jornada: ${e.message}',
+      };
+    } on FormatException catch (e) {
+      print('💥 FORMAT EXCEPTION: ${e.message}');
+      return {'success': false, 'message': 'Error en formato de respuesta'};
+    } catch (e) {
+      print('💥 ERROR INESPERADO: $e');
+      return {'success': false, 'message': 'Error inesperado: $e'};
+    }
+  }
+
+  // ============================================
+  // 10. FINALIZAR JORNADA LABORAL
+  // ============================================
+  static Future<Map<String, dynamic>> finalizarJornada({
+    required String usuarioUsername,
+  }) async {
+    final url = Uri.parse('$_baseUrl/api/jornada/finalizar/');
+
+    print('⏰ [REPOSITORY] Finalizando jornada laboral');
+    print('🔗 URL: $url');
+    print('👤 Usuario: $usuarioUsername');
+
+    try {
+      final body = jsonEncode({'usuario_username': usuarioUsername});
+
+      final response = await http.post(url, headers: _headers, body: body);
+
+      print('📥 Código de estado: ${response.statusCode}');
+      print('📥 Respuesta: ${response.body}');
+
+      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+
+      if (response.statusCode == 200) {
+        print('✅ JORNADA FINALIZADA: ${responseData['message']}');
+        return {
+          'success': true,
+          'message': responseData['message'],
+          'jornada': JornadaModel.fromJson(responseData['data']),
+        };
+      } else if (response.statusCode == 400) {
+        print('❌ ERROR 400: ${responseData['error']}');
+        return {
+          'success': false,
+          'message': responseData['error'] ?? 'Error al finalizar jornada',
+        };
+      } else {
+        print('⚠️ ERROR: ${response.statusCode}');
+        return {
+          'success': false,
+          'message': responseData['error'] ?? 'Error al finalizar jornada',
+        };
+      }
+    } on http.ClientException catch (e) {
+      print('💥 CLIENT EXCEPTION: ${e.message}');
+      return {
+        'success': false,
+        'message': 'Error de conexión al finalizar jornada: ${e.message}',
+      };
+    } on FormatException catch (e) {
+      print('💥 FORMAT EXCEPTION: ${e.message}');
+      return {'success': false, 'message': 'Error en formato de respuesta'};
+    } catch (e) {
+      print('💥 ERROR INESPERADO: $e');
+      return {'success': false, 'message': 'Error inesperado: $e'};
+    }
+  }
+
+  // ============================================
+  // 11. OBTENER JORNADA ACTUAL
+  // ============================================
+  static Future<Map<String, dynamic>> obtenerJornadaActual({
+    required String usuarioUsername,
+  }) async {
+    final url = Uri.parse(
+      '$_baseUrl/api/jornada/actual/?usuario_username=$usuarioUsername',
+    );
+
+    print('⏰ [REPOSITORY] Obteniendo jornada actual');
+    print('🔗 URL: $url');
+
+    try {
+      final response = await http.get(url, headers: _headers);
+
+      print('📥 Código de estado: ${response.statusCode}');
+      print('📥 Respuesta: ${response.body}');
+
+      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+
+      if (response.statusCode == 200) {
+        print('✅ JORNADA ACTUAL OBTENIDA');
+        return {
+          'success': true,
+          'data': JornadaActualResponse.fromJson(responseData['data']),
+        };
+      } else {
+        print('⚠️ ERROR: ${response.statusCode}');
+        return {
+          'success': false,
+          'message': responseData['error'] ?? 'Error al obtener jornada actual',
+        };
+      }
+    } on http.ClientException catch (e) {
+      print('💥 CLIENT EXCEPTION: ${e.message}');
+      return {'success': false, 'message': 'Error de conexión: ${e.message}'};
+    } on FormatException catch (e) {
+      print('💥 FORMAT EXCEPTION: ${e.message}');
+      return {'success': false, 'message': 'Error en formato de respuesta'};
+    } catch (e) {
+      print('💥 ERROR INESPERADO: $e');
+      return {'success': false, 'message': 'Error inesperado: $e'};
+    }
+  }
+
+  // ============================================
+  // 12. OBTENER HISTORIAL DE JORNADAS
+  // ============================================
+  static Future<Map<String, dynamic>> obtenerHistorialJornadas({
+    required String usuarioUsername,
+    int limit = 30,
+  }) async {
+    final url = Uri.parse(
+      '$_baseUrl/api/jornada/historial/?usuario_username=$usuarioUsername&limit=$limit',
+    );
+
+    print('⏰ [REPOSITORY] Obteniendo historial de jornadas');
+    print('🔗 URL: $url');
+
+    try {
+      final response = await http.get(url, headers: _headers);
+
+      print('📥 Código de estado: ${response.statusCode}');
+      print('📥 Respuesta: ${response.body}');
+
+      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+
+      if (response.statusCode == 200) {
+        print(
+          '✅ HISTORIAL OBTENIDO: ${responseData['data']['total_jornadas']} jornadas',
+        );
+        return {
+          'success': true,
+          'data': HistorialJornadasResponse.fromJson(responseData['data']),
+        };
+      } else {
+        print('⚠️ ERROR: ${response.statusCode}');
+        return {
+          'success': false,
+          'message': responseData['error'] ?? 'Error al obtener historial',
+        };
+      }
+    } on http.ClientException catch (e) {
+      print('💥 CLIENT EXCEPTION: ${e.message}');
+      return {'success': false, 'message': 'Error de conexión: ${e.message}'};
+    } on FormatException catch (e) {
+      print('💥 FORMAT EXCEPTION: ${e.message}');
+      return {'success': false, 'message': 'Error en formato de respuesta'};
+    } catch (e) {
+      print('💥 ERROR INESPERADO: $e');
+      return {'success': false, 'message': 'Error inesperado: $e'};
+    }
+  }
+
+  // ============================================
+  // 13. VERIFICAR ESTADO DE JORNADA (método de conveniencia)
+  // ============================================
+  static Future<bool> tieneJornadaActiva(String usuarioUsername) async {
+    try {
+      final resultado = await obtenerJornadaActual(
+        usuarioUsername: usuarioUsername,
+      );
+
+      if (resultado['success'] == true) {
+        final JornadaActualResponse response = resultado['data'];
+        return response.tieneJornadaActiva;
+      }
+      return false;
+    } catch (e) {
+      print('❌ Error verificando jornada activa: $e');
+      return false;
     }
   }
 }

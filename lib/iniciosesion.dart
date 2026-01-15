@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../repositories/usuario_repository.dart';
+import '../utils/usuario_preferences.dart';
 
 class InicioSesion extends StatefulWidget {
   const InicioSesion({super.key});
@@ -13,43 +14,55 @@ class _InicioSesionState extends State<InicioSesion> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  String _errorMessage = '';
 
   Future<void> _iniciarSesion() async {
     if (_usernameController.text.isEmpty || _passwordController.text.isEmpty) {
-      _mostrarError('Por favor complete todos los campos');
+      setState(() => _errorMessage = 'Por favor complete todos los campos');
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
 
     try {
-      // 🔥 CORREGIDO: Usa los métodos STATIC correctamente
       final resultado = await UsuarioRepository.login(
-        username: _usernameController.text.trim(), // 🔥 NAMED PARAMETER
-        password: _passwordController.text, // 🔥 NAMED PARAMETER
+        username: _usernameController.text.trim(),
+        password: _passwordController.text,
       );
 
       if (resultado['success'] == true) {
-        _mostrarExito(resultado['message'] ?? 'Login exitoso');
+        final usuarioData = resultado['data'];
 
-        // Guardar datos del usuario si quieres persistencia
-        // final prefs = await SharedPreferences.getInstance();
-        // await prefs.setString('usuario', jsonEncode(resultado['data']));
+        // Guardar datos del usuario en SharedPreferences
+        await UsuarioPreferences.guardarUsuarioLogin(usuarioData);
 
-        // Navegar al menú - con verificación de mounted
+        _mostrarExito('Bienvenido ${usuarioData['nombres']}');
+
+        // Navegar al menú con verificación de mounted
         if (mounted) {
           Future.delayed(const Duration(seconds: 1), () {
-            Navigator.pushNamed(context, '/menu');
+            if (mounted) {
+              Navigator.pushReplacementNamed(context, '/');
+            }
           });
         }
       } else {
-        _mostrarError(resultado['message'] ?? 'Error desconocido');
+        if (mounted) {
+          setState(() {
+            _errorMessage = resultado['message'] ?? 'Error desconocido';
+            _isLoading = false;
+          });
+        }
       }
     } catch (e) {
-      _mostrarError('Error de conexión: $e');
-    } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _errorMessage = 'Error de conexión: $e';
+          _isLoading = false;
+        });
       }
     }
   }
@@ -61,17 +74,6 @@ class _InicioSesionState extends State<InicioSesion> {
         content: Text(mensaje),
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
-  void _mostrarError(String mensaje) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(mensaje),
-        backgroundColor: Colors.red,
-        duration: const Duration(seconds: 3),
       ),
     );
   }
@@ -130,7 +132,7 @@ class _InicioSesionState extends State<InicioSesion> {
                         border: Border.all(color: Colors.yellow, width: 3),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.yellow.withAlpha(76), // 🔥 CORREGIDO
+                            color: Colors.yellow.withOpacity(0.3),
                             blurRadius: 15,
                             spreadRadius: 5,
                           ),
@@ -154,7 +156,37 @@ class _InicioSesionState extends State<InicioSesion> {
                       ),
                     ),
 
-                    const SizedBox(height: 50),
+                    const SizedBox(height: 30),
+
+                    // Mensaje de error
+                    if (_errorMessage.isNotEmpty)
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 20),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.red[900]!.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.red),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.error,
+                              color: Colors.red,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                _errorMessage,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    const SizedBox(height: 20),
 
                     // Campo de usuario
                     Container(
@@ -272,13 +304,7 @@ class _InicioSesionState extends State<InicioSesion> {
                             borderRadius: BorderRadius.circular(15),
                           ),
                           elevation: 8,
-                          shadowColor: Colors.yellow.withAlpha(
-                            127,
-                          ), // 🔥 CORREGIDO
                           minimumSize: const Size(double.infinity, 50),
-                          disabledBackgroundColor: Colors.yellow.withAlpha(
-                            127,
-                          ), // 🔥 CORREGIDO
                         ),
                         child: _isLoading
                             ? const SizedBox(
@@ -393,7 +419,7 @@ class _InicioSesionState extends State<InicioSesion> {
             // Loading overlay
             if (_isLoading)
               Container(
-                color: Colors.black.withAlpha(127), // 🔥 CORREGIDO
+                color: Colors.black.withOpacity(0.5),
                 child: const Center(
                   child: CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.yellow),
