@@ -2,7 +2,9 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UsuarioPreferences {
+  // ===============================
   // Guardar datos del usuario después del login
+  // ===============================
   static Future<void> guardarUsuarioLogin(
     Map<String, dynamic> usuarioData,
   ) async {
@@ -18,37 +20,42 @@ class UsuarioPreferences {
 
     print('✅ Datos de usuario guardados en SharedPreferences');
     print('   Usuario: ${usuarioData['username']}');
-    print('   Nombre: ${usuarioData['nombres']}');
+    print('   Nombre: ${usuarioData['nombres']} ${usuarioData['apellidos']}');
     print('   Mesa: ${usuarioData['mesa']}');
   }
 
-  // Obtener datos del usuario
+  // ===============================
+  // Obtener TODOS los datos del usuario
+  // ===============================
   static Future<Map<String, dynamic>> obtenerUsuarioData() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final usuarioData = {
-      'id': prefs.getString('usuario_id') ?? '',
-      'username': prefs.getString('usuario_username') ?? '',
-      'nombre': prefs.getString('usuario_nombre') ?? '',
-      'apellidos': prefs.getString('usuario_apellidos') ?? '',
-      'nombre_completo':
-          '${prefs.getString('usuario_nombre') ?? ''} ${prefs.getString('usuario_apellidos') ?? ''}'
-              .trim(),
-      'mesa': prefs.getString('usuario_mesa') ?? '',
-      'cargo': prefs.getString('usuario_cargo') ?? '',
+    final nombre = prefs.getString('usuario_nombre') ?? '';
+    final apellidos = prefs.getString('usuario_apellidos') ?? '';
+
+    return {
+      'id': prefs.getString('usuario_id'),
+      'username': prefs.getString('usuario_username'),
+      'nombre': nombre,
+      'apellidos': apellidos,
+      'nombre_completo': '$nombre $apellidos'.trim(),
+      'mesa': prefs.getString('usuario_mesa'),
+      'cargo': prefs.getString('usuario_cargo'),
       'is_logged_in': prefs.getBool('is_logged_in') ?? false,
     };
-
-    return usuarioData;
   }
 
+  // ===============================
   // Verificar si el usuario está logueado
+  // ===============================
   static Future<bool> estaLogueado() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('is_logged_in') ?? false;
   }
 
+  // ===============================
   // Limpiar datos (logout)
+  // ===============================
   static Future<void> limpiarUsuarioData() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -63,24 +70,31 @@ class UsuarioPreferences {
     print('✅ Datos de usuario eliminados (logout)');
   }
 
+  // ===============================
   // Obtener solo el username
-  static Future<String> obtenerUsername() async {
+  // ===============================
+  static Future<String?> obtenerUsername() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('usuario_username') ?? '';
+    return prefs.getString('usuario_username');
   }
 
-  // Obtener solo el nombre completo
-  // Añade este método a tu clase UsuarioPreferences
+  // ===============================
+  // Obtener nombre completo
+  // ===============================
   static Future<String?> obtenerNombreCompleto() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('nombreCompleto') ??
-        prefs.getString('nombre') ??
-        prefs.getString('usuario_nombre');
+    final nombre = prefs.getString('usuario_nombre');
+    final apellidos = prefs.getString('usuario_apellidos');
+
+    if (nombre == null && apellidos == null) return null;
+    return '${nombre ?? ''} ${apellidos ?? ''}'.trim();
   }
 
-  // Obtener solo la mesa
-  static Future<String> obtenerMesa() async {
+  // ===============================
+  // Obtener mesa  ✅ AHORA NULLABLE
+  // ===============================
+  static Future<String?> obtenerMesa() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('usuario_mesa') ?? '';
+    return prefs.getString('usuario_mesa'); // puede ser null
   }
 }

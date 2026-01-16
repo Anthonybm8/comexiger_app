@@ -1,122 +1,85 @@
-// models/jornada_model.dart
+// lib/models/jornada_model.dart
 import 'package:flutter/material.dart';
 
 class JornadaModel {
-  int? id;
-  String usuarioUsername;
-  String usuarioNombre;
-  String mesa;
-  DateTime fecha;
-  DateTime horaInicio;
-  DateTime? horaFin;
-  String estado;
-  double? horasTrabajadas;
+  final int id;
+  final String mesa;
+  final DateTime fechaEntrada;
+  final DateTime horaInicio;
+  final DateTime? horaFin;
+  final double? horasTrabajadas;
 
   JornadaModel({
-    this.id,
-    required this.usuarioUsername,
-    required this.usuarioNombre,
+    required this.id,
     required this.mesa,
-    required this.fecha,
+    required this.fechaEntrada,
     required this.horaInicio,
     this.horaFin,
-    required this.estado,
     this.horasTrabajadas,
   });
 
+  // ------------------------------
+  // Helpers seguros para DateTime
+  // ------------------------------
+  static DateTime _parseDateTimeSafe(dynamic value) {
+    if (value == null) return DateTime.now();
+    final s = value.toString().trim();
+    if (s.isEmpty) return DateTime.now();
+    return DateTime.parse(s);
+  }
+
   factory JornadaModel.fromJson(Map<String, dynamic> json) {
     return JornadaModel(
-      id: json['id'],
-      usuarioUsername: json['usuario_username'] ?? '',
-      usuarioNombre: json['usuario_nombre'] ?? '',
-      mesa: json['mesa'] ?? '',
-      fecha: DateTime.parse(json['fecha']),
-      horaInicio: DateTime.parse(json['hora_inicio']),
-      horaFin: json['hora_fin'] != null
-          ? DateTime.parse(json['hora_fin'])
+      id: (json['id'] ?? 0) as int,
+      mesa: (json['numero_mesa'] ?? json['mesa'] ?? '').toString(),
+      fechaEntrada: _parseDateTimeSafe(json['fecha_entrada']),
+      horaInicio: _parseDateTimeSafe(json['hora_inicio']),
+      horaFin: json['hora_final'] != null
+          ? _parseDateTimeSafe(json['hora_final'])
           : null,
-      estado: json['estado'] ?? 'iniciada',
-      horasTrabajadas: json['horas_trabajadas']?.toDouble(),
+      horasTrabajadas: json['horas_trabajadas'] != null
+          ? (json['horas_trabajadas'] as num).toDouble()
+          : null,
     );
   }
 
-  Map<String, dynamic> toJsonForIniciar() {
-    return {
-      'usuario_username': usuarioUsername,
-      'usuario_nombre': usuarioNombre,
-      'mesa': mesa,
-    };
-  }
+  // ------------------------------
+  // Estado / UI helpers
+  // ------------------------------
+  bool get estaActiva => horaFin == null;
 
-  Map<String, dynamic> toJsonForFinalizar() {
-    return {'usuario_username': usuarioUsername};
-  }
+  // ✅ esto arregla tu error: _jornadaActual?.estado
+  String get estado => estaActiva ? 'iniciada' : 'finalizada';
 
-  String get horaInicioFormatted {
-    return '${horaInicio.hour.toString().padLeft(2, '0')}:${horaInicio.minute.toString().padLeft(2, '0')}';
-  }
+  Color get estadoColor => estaActiva ? Colors.green : Colors.blue;
+  IconData get estadoIcon => estaActiva ? Icons.play_arrow : Icons.check_circle;
+  String get estadoTexto => estaActiva ? 'En Progreso' : 'Finalizada';
+
+  // ------------------------------
+  // Formatos
+  // ------------------------------
+  String get horaInicioFormatted =>
+      '${horaInicio.hour.toString().padLeft(2, '0')}:${horaInicio.minute.toString().padLeft(2, '0')}';
 
   String? get horaFinFormatted {
     if (horaFin == null) return null;
     return '${horaFin!.hour.toString().padLeft(2, '0')}:${horaFin!.minute.toString().padLeft(2, '0')}';
   }
 
-  String get fechaFormatted {
-    return '${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}';
-  }
-
-  String get duracionFormatted {
-    if (horasTrabajadas == null) return 'En curso';
-    final horas = horasTrabajadas!.floor();
-    final minutos = ((horasTrabajadas! - horas) * 60).round();
-    return '${horas}h ${minutos}m';
-  }
-
-  bool get estaActiva => estado == 'iniciada';
-
-  Color get estadoColor {
-    switch (estado) {
-      case 'iniciada':
-        return Colors.green;
-      case 'finalizada':
-        return Colors.blue;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  IconData get estadoIcon {
-    switch (estado) {
-      case 'iniciada':
-        return Icons.play_arrow;
-      case 'finalizada':
-        return Icons.check_circle;
-      default:
-        return Icons.help;
-    }
-  }
-
-  String get estadoTexto {
-    switch (estado) {
-      case 'iniciada':
-        return 'En Progreso';
-      case 'finalizada':
-        return 'Finalizada';
-      default:
-        return estado;
-    }
-  }
+  String get fechaFormatted =>
+      '${fechaEntrada.day.toString().padLeft(2, '0')}/${fechaEntrada.month.toString().padLeft(2, '0')}/${fechaEntrada.year}';
 
   @override
-  String toString() {
-    return 'Jornada{id: $id, usuario: $usuarioUsername, fecha: $fecha, estado: $estado}';
-  }
+  String toString() => 'Jornada{id:$id, mesa:$mesa, estado:$estado}';
 }
 
+// ===============================
+// WRAPPERS compatibles con tu código
+// ===============================
 class JornadaActualResponse {
-  bool tieneJornadaActiva;
-  JornadaModel? jornadaActiva;
-  JornadaModel? ultimaJornada;
+  final bool tieneJornadaActiva;
+  final JornadaModel? jornadaActiva;
+  final JornadaModel? ultimaJornada;
 
   JornadaActualResponse({
     required this.tieneJornadaActiva,
@@ -138,9 +101,9 @@ class JornadaActualResponse {
 }
 
 class HistorialJornadasResponse {
-  int totalJornadas;
-  double totalHoras;
-  List<JornadaModel> jornadas;
+  final int totalJornadas;
+  final double totalHoras;
+  final List<JornadaModel> jornadas;
 
   HistorialJornadasResponse({
     required this.totalJornadas,
@@ -149,10 +112,13 @@ class HistorialJornadasResponse {
   });
 
   factory HistorialJornadasResponse.fromJson(Map<String, dynamic> json) {
-    final List<dynamic> jornadasData = json['jornadas'] ?? [];
+    final List<dynamic> jornadasData = (json['jornadas'] ?? []) as List<dynamic>;
+
     return HistorialJornadasResponse(
       totalJornadas: json['total_jornadas'] ?? 0,
-      totalHoras: json['total_horas']?.toDouble() ?? 0.0,
+      totalHoras: json['total_horas'] != null
+          ? (json['total_horas'] as num).toDouble()
+          : 0.0,
       jornadas: jornadasData.map((j) => JornadaModel.fromJson(j)).toList(),
     );
   }

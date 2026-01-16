@@ -8,11 +8,14 @@ import '../models/rendimiento_model.dart';
 class RendimientoDashboard extends StatefulWidget {
   final String usuarioUsername;
   final String usuarioNombre;
+  final String usuarioMesa;
+
 
   const RendimientoDashboard({
     super.key,
     required this.usuarioUsername,
     required this.usuarioNombre,
+    required this.usuarioMesa,
   });
 
   @override
@@ -20,7 +23,6 @@ class RendimientoDashboard extends StatefulWidget {
 }
 
 class _RendimientoDashboardState extends State<RendimientoDashboard> {
-  // Estados
   JornadaModel? jornadaActual;
   List<JornadaModel> historialJornadas = [];
   List<RendimientoModel> rendimientos = [];
@@ -39,23 +41,28 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
     setState(() => isLoading = true);
 
     try {
-      // 1. Obtener jornada actual
+      // 1) ✅ Obtener jornada actual POR MESA
       final jornadaResult = await JornadaRepository.obtenerJornadaActual(
-        usuarioUsername: widget.usuarioUsername,
+        mesa: widget.usuarioMesa,
       );
 
       if (jornadaResult['success'] == true) {
         final data = jornadaResult['data'];
-        if (data['tiene_jornada_activa'] && data['jornada_activa'] != null) {
+        if (data['tiene_jornada_activa'] == true &&
+            data['jornada_activa'] != null) {
           setState(() {
             jornadaActual = JornadaModel.fromJson(data['jornada_activa']);
+          });
+        } else {
+          setState(() {
+            jornadaActual = null;
           });
         }
       }
 
-      // 2. Obtener historial de jornadas
+      // 2) ✅ Historial POR MESA
       final historialResult = await JornadaRepository.obtenerHistorialJornadas(
-        usuarioUsername: widget.usuarioUsername,
+        mesa: widget.usuarioMesa,
         limit: 10,
       );
 
@@ -68,7 +75,7 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
         });
       }
 
-      // 3. Obtener rendimientos recientes
+      // 3) Rendimientos recientes (tu repo actual trae todos; lo dejo igual)
       final rendimientosResult =
           await RendimientoRepository.obtenerTodosRendimientos(
             ordenar: 'fecha',
@@ -81,7 +88,7 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
         });
       }
 
-      // 4. Obtener estadísticas
+      // 4) Estadísticas
       final statsResult = await RendimientoRepository.obtenerEstadisticas();
       if (statsResult['success'] == true) {
         setState(() {
@@ -89,7 +96,6 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
         });
       }
     } catch (e) {
-      // Error cargando datos
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -99,21 +105,16 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
   Future<void> _iniciarJornada() async {
-    // Aquí deberías obtener la mesa actual del usuario
-    // Por ahora usaremos una mesa por defecto
-    final String mesa = "Mesa 1";
-
+    // ✅ usa la mesa real asignada al usuario
     final result = await JornadaRepository.iniciarJornada(
-      usuarioUsername: widget.usuarioUsername,
-      usuarioNombre: widget.usuarioNombre,
-      mesa: mesa,
+      mesa: widget.usuarioMesa,
+      usuarioUsername: widget.usuarioUsername, // opcional (logs)
+      usuarioNombre: widget.usuarioNombre, // opcional (logs)
     );
 
     if (result['success'] == true) {
@@ -137,7 +138,8 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
 
   Future<void> _finalizarJornada() async {
     final result = await JornadaRepository.finalizarJornada(
-      usuarioUsername: widget.usuarioUsername,
+      mesa: widget.usuarioMesa,
+      usuarioUsername: widget.usuarioUsername, // opcional (logs)
     );
 
     if (result['success'] == true) {
@@ -165,7 +167,7 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: Text(
-          'Dashboard de Rendimiento',
+          'Dashboard de Rendimiento - Mesa ${widget.usuarioMesa}',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.black,
@@ -187,30 +189,21 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ==================== TARJETA DE JORNADA ACTUAL ====================
                   _buildJornadaActualCard(),
-
                   SizedBox(height: 20),
-
-                  // ==================== ESTADÍSTICAS ====================
                   _buildEstadisticasSection(),
-
                   SizedBox(height: 20),
-
-                  // ==================== RENDIMIENTOS RECIENTES ====================
                   _buildRendimientosRecientes(),
-
                   SizedBox(height: 20),
-
-                  // ==================== HISTORIAL DE JORNADAS ====================
                   _buildHistorialJornadas(),
-
                   SizedBox(height: 40),
                 ],
               ),
             ),
     );
   }
+
+  // ====== UI (lo demás igual, no lo toqué) ======
 
   Widget _buildJornadaActualCard() {
     return Card(
@@ -259,9 +252,7 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
                   ),
               ],
             ),
-
             SizedBox(height: 15),
-
             if (jornadaActual == null)
               Column(
                 children: [
@@ -290,7 +281,6 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
             else
               Column(
                 children: [
-                  // Información de la jornada
                   Table(
                     columnWidths: {
                       0: FlexColumnWidth(2),
@@ -374,10 +364,7 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
                         ),
                     ],
                   ),
-
                   SizedBox(height: 20),
-
-                  // Botones de acción
                   if (jornadaActual!.estaActiva)
                     ElevatedButton.icon(
                       onPressed: _finalizarJornada,
@@ -494,9 +481,7 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
   }
 
   Widget _buildRendimientosRecientes() {
-    if (rendimientos.isEmpty) {
-      return Container();
-    }
+    if (rendimientos.isEmpty) return Container();
 
     final rendimientosMostrar = rendimientos.take(5).toList();
 
@@ -559,9 +544,7 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
   }
 
   Widget _buildHistorialJornadas() {
-    if (historialJornadas.isEmpty) {
-      return Container();
-    }
+    if (historialJornadas.isEmpty) return Container();
 
     final jornadasMostrar = historialJornadas.take(5).toList();
 
@@ -579,12 +562,7 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
                 color: Colors.blue[900],
               ),
             ),
-            TextButton(
-              onPressed: () {
-                // Navegar a vista detallada del historial
-              },
-              child: Text('Ver todo'),
-            ),
+            TextButton(onPressed: () {}, child: Text('Ver todo')),
           ],
         ),
         SizedBox(height: 10),

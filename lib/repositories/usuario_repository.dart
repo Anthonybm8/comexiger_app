@@ -6,9 +6,7 @@ import '../models/jornada_model.dart';
 
 class UsuarioRepository {
   // 🎯 URL BASE - SIN 'Usuario/'
-  static const String _baseUrl = "http://10.0.2.2:8000";
-  // Para dispositivo físico: "http://192.168.1.X:8000"
-  // Para iOS Simulator: "http://localhost:8000"
+  static const String _baseUrl = "http://192.168.0.109:8000";
 
   // Headers comunes para todas las peticiones
   static final Map<String, String> _headers = {
@@ -28,22 +26,15 @@ class UsuarioRepository {
     print('📤 Datos completos: ${usuario.toJsonForRegister()}');
 
     try {
-      // Convertir datos a JSON
       final body = jsonEncode(usuario.toJsonForRegister());
-
-      // Enviar petición POST
       final response = await http.post(url, headers: _headers, body: body);
 
-      // Logs de respuesta
       print('📥 Código de estado: ${response.statusCode}');
       print('📥 Cuerpo de respuesta: ${response.body}');
 
-      // Decodificar respuesta (usar utf8.decode para caracteres especiales)
       final responseData = jsonDecode(utf8.decode(response.bodyBytes));
 
-      // Procesar según el código de estado
       if (response.statusCode == 201) {
-        // Éxito - Usuario creado
         print('✅ REGISTRO EXITOSO: ${responseData['message']}');
         return {
           'success': true,
@@ -51,21 +42,18 @@ class UsuarioRepository {
           'data': responseData['data'],
         };
       } else if (response.statusCode == 400) {
-        // Error del cliente (datos inválidos)
         print('❌ ERROR 400: ${responseData['error']}');
         return {
           'success': false,
           'message': responseData['error'] ?? 'Error en los datos enviados',
         };
       } else if (response.statusCode == 500) {
-        // Error del servidor
         print('❌ ERROR 500: ${responseData['error']}');
         return {
           'success': false,
           'message': 'Error interno del servidor: ${responseData['error']}',
         };
       } else {
-        // Otro código de error
         print('⚠️ CÓDIGO INESPERADO: ${response.statusCode}');
         return {
           'success': false,
@@ -74,25 +62,21 @@ class UsuarioRepository {
         };
       }
     } on http.ClientException catch (e) {
-      // Error de conexión HTTP
       print('💥 CLIENT EXCEPTION: ${e.message}');
       return {
         'success': false,
         'message':
             'Error de conexión: ${e.message}.\n'
-            'Verifica que Django esté corriendo en http://10.0.2.2:8000',
+            'Verifica que Django esté corriendo en $_baseUrl',
       };
     } on FormatException catch (e) {
-      // Error al decodificar JSON
       print('💥 FORMAT EXCEPTION: ${e.message}');
       return {
         'success': false,
         'message': 'Error en el formato de respuesta del servidor',
       };
     } catch (e) {
-      // Error inesperado
       print('💥 ERROR INESPERADO: $e');
-      print('💥 Stack trace: ${e.toString()}');
       return {'success': false, 'message': 'Error inesperado: $e'};
     }
   }
@@ -111,25 +95,19 @@ class UsuarioRepository {
     print('👤 Usuario: $username');
 
     try {
-      // Preparar datos para login
       final body = jsonEncode({
         'username': username.trim(),
         'password': password.trim(),
       });
 
-      // Enviar petición POST
       final response = await http.post(url, headers: _headers, body: body);
 
-      // Logs de respuesta
       print('📥 Código de estado: ${response.statusCode}');
       print('📥 Cuerpo de respuesta: ${response.body}');
 
-      // Decodificar respuesta
       final responseData = jsonDecode(utf8.decode(response.bodyBytes));
 
-      // Procesar según el código de estado
       if (response.statusCode == 200) {
-        // Éxito - Login correcto
         print('✅ LOGIN EXITOSO: ${responseData['message']}');
         return {
           'success': true,
@@ -137,21 +115,18 @@ class UsuarioRepository {
           'data': responseData['data'],
         };
       } else if (response.statusCode == 401) {
-        // No autorizado (credenciales incorrectas)
         print('❌ ERROR 401: ${responseData['error']}');
         return {
           'success': false,
           'message': responseData['error'] ?? 'Credenciales incorrectas',
         };
       } else if (response.statusCode == 404) {
-        // Usuario no encontrado
         print('❌ ERROR 404: ${responseData['error']}');
         return {
           'success': false,
           'message': responseData['error'] ?? 'Usuario no encontrado',
         };
       } else {
-        // Otro error
         print('⚠️ CÓDIGO INESPERADO: ${response.statusCode}');
         return {
           'success': false,
@@ -178,14 +153,11 @@ class UsuarioRepository {
 
     try {
       final url = Uri.parse('$_baseUrl/');
-
       print('🔗 URL de prueba: $url');
 
-      // Crear un client con timeout
       final client = http.Client();
-      final response = await client
-          .get(url)
-          .timeout(const Duration(seconds: 5));
+      final response =
+          await client.get(url).timeout(const Duration(seconds: 5));
 
       print('📥 Código de estado: ${response.statusCode}');
 
@@ -208,18 +180,13 @@ class UsuarioRepository {
         'success': false,
         'message':
             '❌ No se pudo conectar con Django: ${e.message}\n'
-            'Asegúrate de que:\n'
-            '1. Django esté corriendo (python manage.py runserver)\n'
-            '2. La IP 10.0.2.2:8000 sea accesible\n'
-            '3. No haya firewalls bloqueando la conexión',
+            'Asegúrate de que Django esté corriendo en $_baseUrl',
       };
     } on Exception catch (e) {
       print('💥 TIMEOUT EXCEPTION: $e');
       return {
         'success': false,
-        'message':
-            '❌ Timeout de conexión\n'
-            'El servidor Django no responde en 5 segundos',
+        'message': '❌ Timeout de conexión (no responde en 5 segundos)',
       };
     } catch (e) {
       print('💥 ERROR INESPERADO: $e');
@@ -235,26 +202,20 @@ class UsuarioRepository {
 
     try {
       final url = Uri.parse('$_baseUrl/api/registrar/');
-
       print('🔗 URL de API: $url');
 
-      // Crear un client con timeout
       final client = http.Client();
-      final response = await client
-          .get(url)
-          .timeout(const Duration(seconds: 5));
+      final response =
+          await client.get(url).timeout(const Duration(seconds: 5));
 
       print('📥 Código de estado: ${response.statusCode}');
       print('📥 Respuesta: ${response.body}');
 
-      // Interpretar el código de estado
       if (response.statusCode == 405) {
-        // 405 Method Not Allowed - ¡ES BUENO! Significa que la ruta existe pero no acepta GET
         return {
           'success': true,
           'message': '✅ Ruta API encontrada (espera POST, no GET)',
           'status': response.statusCode,
-          'note': 'Esta ruta solo acepta método POST para registrar usuarios',
         };
       } else if (response.statusCode == 200 || response.statusCode == 201) {
         return {
@@ -265,10 +226,7 @@ class UsuarioRepository {
       } else if (response.statusCode == 404) {
         return {
           'success': false,
-          'message':
-              '❌ Ruta API no encontrada (404)\n'
-              'Verifica que en Django esté configurada:\n'
-              'path(\'api/registrar/\', registrar_usuario_api)',
+          'message': '❌ Ruta API no encontrada (404)',
           'status': response.statusCode,
         };
       } else {
@@ -291,60 +249,40 @@ class UsuarioRepository {
   // 5. VALIDAR SI UN USUARIO YA EXISTE
   // ============================================
   static Future<bool> usuarioExiste(String username) async {
-    // Esta función asume que tu API tiene un endpoint para verificar usuario
-    // Si no lo tienes, puedes implementarlo en Django o usar try-catch del login
-
     try {
-      // Intentamos login con contraseña falsa para ver si el usuario existe
-      final result = await login(
-        username: username,
-        password: 'dummy_password',
-      );
+      final result = await login(username: username, password: 'dummy_password');
 
-      // Si el error es 401 (credenciales incorrectas) significa que el usuario SÍ existe
-      // Si el error es 404 (no encontrado) significa que NO existe
+      if (result['success'] == true) return true;
 
-      if (result['success'] == true) {
-        return true; // Usuario existe y contraseña correcta (improbable con dummy)
-      } else if (result['message']?.contains('no encontrado') == true ||
+      if (result['message']?.contains('no encontrado') == true ||
           result['message']?.contains('Usuario no') == true) {
-        return false; // Usuario no existe
-      } else {
-        return true; // Otro error, asumimos que existe
+        return false;
       }
-    } catch (e) {
-      return false; // En caso de error, asumimos que no existe
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 
   // ============================================
-  // 6. MÉTODO DE PRUEBA SIMPLE (solo logs, sin UI)
+  // 6. MÉTODO DE PRUEBA SIMPLE
   // ============================================
   static Future<void> runFullTest() async {
     print('🧪 [REPOSITORY] Ejecutando prueba completa...');
 
-    // 1. Probar conexión básica
     print('\n=== 1. PROBANDO CONEXIÓN BÁSICA ===');
     final connectionTest = await testConnection();
     print('Resultado: ${connectionTest['message']}');
 
-    // 2. Probar ruta API
     print('\n=== 2. PROBANDO RUTA API ===');
     final apiTest = await testApiRoute();
     print('Resultado: ${apiTest['message']}');
 
-    // 3. Resumen
     print('\n=== RESUMEN DE PRUEBA ===');
     if (connectionTest['success'] == true && apiTest['success'] == true) {
-      print('✅ TODO CORRECTO: Django está accesible y las APIs funcionan');
+      print('✅ TODO CORRECTO');
     } else {
-      print('❌ HAY PROBLEMAS:');
-      if (!connectionTest['success']) {
-        print('   • ${connectionTest['message']}');
-      }
-      if (!apiTest['success']) {
-        print('   • ${apiTest['message']}');
-      }
+      print('❌ HAY PROBLEMAS');
     }
 
     print('\n=== PRUEBA COMPLETA FINALIZADA ===');
@@ -381,18 +319,8 @@ class UsuarioRepository {
           'message': responseData['error'] ?? 'Error al obtener mesas',
         };
       }
-    } on http.ClientException catch (e) {
-      print('💥 CLIENT EXCEPTION: ${e.message}');
-      return {
-        'success': false,
-        'message': 'Error de conexión al obtener mesas: ${e.message}',
-      };
-    } on FormatException catch (e) {
-      print('💥 FORMAT EXCEPTION: ${e.message}');
-      return {'success': false, 'message': 'Error en formato de respuesta'};
     } catch (e) {
-      print('💥 ERROR INESPERADO: $e');
-      return {'success': false, 'message': 'Error inesperado: $e'};
+      return {'success': false, 'message': 'Error al obtener mesas: $e'};
     }
   }
 
@@ -425,32 +353,27 @@ class UsuarioRepository {
         };
       }
     } catch (e) {
-      print('💥 ERROR: $e');
       return {'success': false, 'message': 'Error: $e'};
     }
   }
 
   // ============================================
-  // 9. INICIAR JORNADA LABORAL
+  // 9. INICIAR JORNADA (POR MESA)
   // ============================================
   static Future<Map<String, dynamic>> iniciarJornada({
-    required String usuarioUsername,
-    required String usuarioNombre,
     required String mesa,
+    String? usuarioUsername,
+    String? usuarioNombre,
   }) async {
     final url = Uri.parse('$_baseUrl/api/jornada/iniciar/');
 
-    print('⏰ [REPOSITORY] Iniciando jornada laboral');
+    print('⏰ [REPOSITORY] Iniciando jornada laboral (POR MESA)');
     print('🔗 URL: $url');
-    print('👤 Usuario: $usuarioUsername');
+    print('👤 Usuario: ${usuarioUsername ?? "-"}');
     print('📋 Mesa: $mesa');
 
     try {
-      final body = jsonEncode({
-        'usuario_username': usuarioUsername,
-        'usuario_nombre': usuarioNombre,
-        'mesa': mesa,
-      });
+      final body = jsonEncode({'mesa': mesa});
 
       final response = await http.post(url, headers: _headers, body: body);
 
@@ -460,57 +383,48 @@ class UsuarioRepository {
       final responseData = jsonDecode(utf8.decode(response.bodyBytes));
 
       if (response.statusCode == 201) {
-        print('✅ JORNADA INICIADA: ${responseData['message']}');
         return {
           'success': true,
           'message': responseData['message'],
           'jornada': JornadaModel.fromJson(responseData['data']),
         };
-      } else if (response.statusCode == 400) {
-        print('❌ ERROR 400: ${responseData['error']}');
+      }
+
+      if (response.statusCode == 400) {
+        // ✅ backend ahora manda: {error: "...", data: {...}}
+        final data = responseData['data'];
         return {
           'success': false,
-          'message': responseData['error'] ?? 'Error al iniciar jornada',
-          'jornada_actual': responseData['jornada_actual'] != null
-              ? JornadaModel.fromJson(responseData['jornada_actual'])
-              : null,
-        };
-      } else {
-        print('⚠️ ERROR: ${response.statusCode}');
-        return {
-          'success': false,
-          'message': responseData['error'] ?? 'Error al iniciar jornada',
+          'message': responseData['error'] ?? 'Ya existe jornada activa',
+          'jornada': data != null ? JornadaModel.fromJson(data) : null,
         };
       }
-    } on http.ClientException catch (e) {
-      print('💥 CLIENT EXCEPTION: ${e.message}');
+
       return {
         'success': false,
-        'message': 'Error de conexión al iniciar jornada: ${e.message}',
+        'message': responseData['error'] ?? 'Error al iniciar jornada',
       };
-    } on FormatException catch (e) {
-      print('💥 FORMAT EXCEPTION: ${e.message}');
-      return {'success': false, 'message': 'Error en formato de respuesta'};
     } catch (e) {
-      print('💥 ERROR INESPERADO: $e');
-      return {'success': false, 'message': 'Error inesperado: $e'};
+      return {'success': false, 'message': 'Error al iniciar jornada: $e'};
     }
   }
 
   // ============================================
-  // 10. FINALIZAR JORNADA LABORAL
+  // 10. FINALIZAR JORNADA (POR MESA)
   // ============================================
   static Future<Map<String, dynamic>> finalizarJornada({
-    required String usuarioUsername,
+    required String mesa,
+    String? usuarioUsername,
   }) async {
     final url = Uri.parse('$_baseUrl/api/jornada/finalizar/');
 
-    print('⏰ [REPOSITORY] Finalizando jornada laboral');
+    print('⏰ [REPOSITORY] Finalizando jornada laboral (POR MESA)');
     print('🔗 URL: $url');
-    print('👤 Usuario: $usuarioUsername');
+    print('👤 Usuario: ${usuarioUsername ?? "-"}');
+    print('📋 Mesa: $mesa');
 
     try {
-      final body = jsonEncode({'usuario_username': usuarioUsername});
+      final body = jsonEncode({'mesa': mesa});
 
       final response = await http.post(url, headers: _headers, body: body);
 
@@ -520,51 +434,39 @@ class UsuarioRepository {
       final responseData = jsonDecode(utf8.decode(response.bodyBytes));
 
       if (response.statusCode == 200) {
-        print('✅ JORNADA FINALIZADA: ${responseData['message']}');
         return {
           'success': true,
           'message': responseData['message'],
           'jornada': JornadaModel.fromJson(responseData['data']),
         };
-      } else if (response.statusCode == 400) {
-        print('❌ ERROR 400: ${responseData['error']}');
+      }
+
+      if (response.statusCode == 400) {
         return {
           'success': false,
-          'message': responseData['error'] ?? 'Error al finalizar jornada',
-        };
-      } else {
-        print('⚠️ ERROR: ${response.statusCode}');
-        return {
-          'success': false,
-          'message': responseData['error'] ?? 'Error al finalizar jornada',
+          'message': responseData['error'] ?? 'No hay jornada activa',
         };
       }
-    } on http.ClientException catch (e) {
-      print('💥 CLIENT EXCEPTION: ${e.message}');
+
       return {
         'success': false,
-        'message': 'Error de conexión al finalizar jornada: ${e.message}',
+        'message': responseData['error'] ?? 'Error al finalizar jornada',
       };
-    } on FormatException catch (e) {
-      print('💥 FORMAT EXCEPTION: ${e.message}');
-      return {'success': false, 'message': 'Error en formato de respuesta'};
     } catch (e) {
-      print('💥 ERROR INESPERADO: $e');
-      return {'success': false, 'message': 'Error inesperado: $e'};
+      return {'success': false, 'message': 'Error al finalizar jornada: $e'};
     }
   }
 
   // ============================================
-  // 11. OBTENER JORNADA ACTUAL
+  // 11. OBTENER JORNADA ACTUAL (POR MESA)
   // ============================================
   static Future<Map<String, dynamic>> obtenerJornadaActual({
-    required String usuarioUsername,
+    required String mesa,
   }) async {
-    final url = Uri.parse(
-      '$_baseUrl/api/jornada/actual/?usuario_username=$usuarioUsername',
-    );
+    final url = Uri.parse('$_baseUrl/api/jornada/actual/')
+        .replace(queryParameters: {'mesa': mesa});
 
-    print('⏰ [REPOSITORY] Obteniendo jornada actual');
+    print('⏰ [REPOSITORY] Obteniendo jornada actual (POR MESA)');
     print('🔗 URL: $url');
 
     try {
@@ -576,42 +478,32 @@ class UsuarioRepository {
       final responseData = jsonDecode(utf8.decode(response.bodyBytes));
 
       if (response.statusCode == 200) {
-        print('✅ JORNADA ACTUAL OBTENIDA');
         return {
           'success': true,
           'data': JornadaActualResponse.fromJson(responseData['data']),
         };
-      } else {
-        print('⚠️ ERROR: ${response.statusCode}');
-        return {
-          'success': false,
-          'message': responseData['error'] ?? 'Error al obtener jornada actual',
-        };
       }
-    } on http.ClientException catch (e) {
-      print('💥 CLIENT EXCEPTION: ${e.message}');
-      return {'success': false, 'message': 'Error de conexión: ${e.message}'};
-    } on FormatException catch (e) {
-      print('💥 FORMAT EXCEPTION: ${e.message}');
-      return {'success': false, 'message': 'Error en formato de respuesta'};
+
+      return {
+        'success': false,
+        'message': responseData['error'] ?? 'Error al obtener jornada actual',
+      };
     } catch (e) {
-      print('💥 ERROR INESPERADO: $e');
-      return {'success': false, 'message': 'Error inesperado: $e'};
+      return {'success': false, 'message': 'Error al obtener jornada actual: $e'};
     }
   }
 
   // ============================================
-  // 12. OBTENER HISTORIAL DE JORNADAS
+  // 12. OBTENER HISTORIAL DE JORNADAS (POR MESA)
   // ============================================
   static Future<Map<String, dynamic>> obtenerHistorialJornadas({
-    required String usuarioUsername,
+    required String mesa,
     int limit = 30,
   }) async {
-    final url = Uri.parse(
-      '$_baseUrl/api/jornada/historial/?usuario_username=$usuarioUsername&limit=$limit',
-    );
+    final url = Uri.parse('$_baseUrl/api/jornada/historial/')
+        .replace(queryParameters: {'mesa': mesa, 'limit': '$limit'});
 
-    print('⏰ [REPOSITORY] Obteniendo historial de jornadas');
+    print('⏰ [REPOSITORY] Obteniendo historial de jornadas (POR MESA)');
     print('🔗 URL: $url');
 
     try {
@@ -623,41 +515,27 @@ class UsuarioRepository {
       final responseData = jsonDecode(utf8.decode(response.bodyBytes));
 
       if (response.statusCode == 200) {
-        print(
-          '✅ HISTORIAL OBTENIDO: ${responseData['data']['total_jornadas']} jornadas',
-        );
         return {
           'success': true,
           'data': HistorialJornadasResponse.fromJson(responseData['data']),
         };
-      } else {
-        print('⚠️ ERROR: ${response.statusCode}');
-        return {
-          'success': false,
-          'message': responseData['error'] ?? 'Error al obtener historial',
-        };
       }
-    } on http.ClientException catch (e) {
-      print('💥 CLIENT EXCEPTION: ${e.message}');
-      return {'success': false, 'message': 'Error de conexión: ${e.message}'};
-    } on FormatException catch (e) {
-      print('💥 FORMAT EXCEPTION: ${e.message}');
-      return {'success': false, 'message': 'Error en formato de respuesta'};
+
+      return {
+        'success': false,
+        'message': responseData['error'] ?? 'Error al obtener historial',
+      };
     } catch (e) {
-      print('💥 ERROR INESPERADO: $e');
-      return {'success': false, 'message': 'Error inesperado: $e'};
+      return {'success': false, 'message': 'Error al obtener historial: $e'};
     }
   }
 
   // ============================================
-  // 13. VERIFICAR ESTADO DE JORNADA (método de conveniencia)
+  // 13. VERIFICAR ESTADO DE JORNADA (POR MESA)
   // ============================================
-  static Future<bool> tieneJornadaActiva(String usuarioUsername) async {
+  static Future<bool> tieneJornadaActivaPorMesa(String mesa) async {
     try {
-      final resultado = await obtenerJornadaActual(
-        usuarioUsername: usuarioUsername,
-      );
-
+      final resultado = await obtenerJornadaActual(mesa: mesa);
       if (resultado['success'] == true) {
         final JornadaActualResponse response = resultado['data'];
         return response.tieneJornadaActiva;

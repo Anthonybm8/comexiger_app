@@ -40,8 +40,9 @@ class _JornadaState extends State<Jornada> {
 
     try {
       final resultado = await UsuarioRepository.obtenerJornadaActual(
-        usuarioUsername: widget.usuarioUsername,
+        mesa: widget.usuarioMesa,
       );
+
 
       if (mounted) {
         if (resultado['success'] == true) {
@@ -105,8 +106,9 @@ class _JornadaState extends State<Jornada> {
 
     try {
       final resultado = await UsuarioRepository.finalizarJornada(
-        usuarioUsername: widget.usuarioUsername,
+        mesa: widget.usuarioMesa,
       );
+
 
       if (resultado['success'] == true) {
         _mostrarExito(resultado['message'] ?? 'Jornada finalizada');
