@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class JornadaRepository {
-  static const String _baseUrl = "http://192.168.0.109:8000";
+  static const String _baseUrl = "http://192.168.0.106:8000";
 
   static final Map<String, String> _headers = {
     'Content-Type': 'application/json; charset=UTF-8',

@@ -6,7 +6,7 @@ import '../models/jornada_model.dart';
 
 class UsuarioRepository {
   // 🎯 URL BASE - SIN 'Usuario/'
-  static const String _baseUrl = "http://192.168.0.109:8000";
+  static const String _baseUrl = "http://192.168.0.106:8000";
 
   // Headers comunes para todas las peticiones
   static final Map<String, String> _headers = {

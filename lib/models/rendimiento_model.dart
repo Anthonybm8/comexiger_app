@@ -37,12 +37,12 @@ class RendimientoModel {
       id: json['id'],
       qrId: json['qr_id'],
       numeroMesa: json['numero_mesa'] ?? '',
-      fechaEntrada: DateTime.parse(json['fecha_entrada']),
+      fechaEntrada: DateTime.parse(json['fecha_entrada']).toLocal(),
       horaInicio: json['hora_inicio'] != null
-          ? DateTime.parse(json['hora_inicio'])
+          ? DateTime.parse(json['hora_inicio']).toLocal()
           : null,
       horaFinal: json['hora_final'] != null
-          ? DateTime.parse(json['hora_final'])
+          ? DateTime.parse(json['hora_final']).toLocal()
           : null,
       rendimiento: json['rendimiento'] ?? 0,
       ramosBase: json['ramos_base'] ?? 0,

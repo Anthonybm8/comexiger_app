@@ -22,11 +22,14 @@ class JornadaModel {
   // Helpers seguros para DateTime
   // ------------------------------
   static DateTime _parseDateTimeSafe(dynamic value) {
-    if (value == null) return DateTime.now();
-    final s = value.toString().trim();
-    if (s.isEmpty) return DateTime.now();
-    return DateTime.parse(s);
-  }
+  if (value == null) return DateTime.now();
+  final s = value.toString().trim();
+  if (s.isEmpty) return DateTime.now();
+
+  // ✅ CLAVE: convertir a hora local (Ecuador)
+  return DateTime.parse(s).toLocal();
+}
+
 
   factory JornadaModel.fromJson(Map<String, dynamic> json) {
     return JornadaModel(
