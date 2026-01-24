@@ -30,15 +30,17 @@ class _EtiquetasState extends State<Etiquetas> {
         _mesaSeleccionada != null &&
         _medidaSeleccionada != null) {
       final fecha = DateTime.now();
-      final idUnico = fecha.microsecondsSinceEpoch;
+      final idUnico = fecha.microsecondsSinceEpoch
+          .toRadixString(16)
+          .toUpperCase();
+
+      // Obtener solo el número de la mesa
+      final numeroMesa = _mesaSeleccionada!.replaceAll('Mesa ', '').trim();
 
       setState(() {
+        // Formato CORREGIDO con Ñ y ] como separadores
         _qrData =
-            "VARIEDAD: $_variedadSeleccionada\n"
-            "MESA: $_mesaSeleccionada\n"
-            "MEDIDA: $_medidaSeleccionada\n"
-            "FECHA: ${fecha.day}/${fecha.month}/${fecha.year}\n"
-            "ID: $idUnico";
+            "IDÑ$idUnico ] MesaÑ$numeroMesa ] FlorÑ$_variedadSeleccionada ] MedidaÑ$_medidaSeleccionada ] FechaÑ${fecha.day}-${fecha.month}-${fecha.year}";
       });
     }
   }
@@ -56,7 +58,7 @@ class _EtiquetasState extends State<Etiquetas> {
       return;
     }
 
-    _actualizarQR(); // Genera QR nuevo siempre
+    _actualizarQR();
 
     await Future.delayed(const Duration(milliseconds: 200));
 

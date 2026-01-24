@@ -12,7 +12,7 @@ class RendimientoRepository {
   };
 
   // ============================================
-  // 1. OBTENER TODOS LOS RENDIMIENTOS
+  // 1. OBTENER TODOS LOS RENDIMIENTOS (CON FILTRO POR MESA)
   // ============================================
   static Future<Map<String, dynamic>> obtenerTodosRendimientos({
     String? fecha,
@@ -20,6 +20,7 @@ class RendimientoRepository {
     String? hasta,
     String? ordenar,
     bool? reciente,
+    String? mesa, // <-- NUEVO PARÁMETRO PARA FILTRAR POR MESA
   }) async {
     String url = '$_baseUrl/api/rendimientos/';
     final Map<String, String> queryParams = {};
@@ -39,6 +40,10 @@ class RendimientoRepository {
       if (reciente != null) {
         queryParams['reciente'] = reciente.toString();
       }
+    }
+    // FILTRAR POR MESA
+    if (mesa != null && mesa.isNotEmpty) {
+      queryParams['mesa'] = mesa;
     }
 
     if (queryParams.isNotEmpty) {

@@ -24,7 +24,8 @@ class RendimientoDashboard extends StatefulWidget {
 class _RendimientoDashboardState extends State<RendimientoDashboard> {
   JornadaModel? jornadaActual;
   List<JornadaModel> historialJornadas = [];
-  List<RendimientoModel> rendimientos = [];
+  List<RendimientoModel> rendimientosMesaActual =
+      []; // Solo rendimientos de la mesa actual
   EstadisticasRendimiento? estadisticas;
   bool isLoading = true;
 
@@ -74,20 +75,21 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
         });
       }
 
-      // 3) Rendimientos recientes (tu repo actual trae todos; lo dejo igual)
+      // 3) ✅ Rendimientos recientes SOLO DE LA MESA ACTUAL
       final rendimientosResult =
           await RendimientoRepository.obtenerTodosRendimientos(
+            mesa: widget.usuarioMesa, // Filtrar por mesa del usuario
             ordenar: 'fecha',
             reciente: true,
           );
 
       if (rendimientosResult['success'] == true) {
         setState(() {
-          rendimientos = rendimientosResult['rendimientos'];
+          rendimientosMesaActual = rendimientosResult['rendimientos'];
         });
       }
 
-      // 4) Estadísticas
+      // 4) Estadísticas (globales, opcional)
       final statsResult = await RendimientoRepository.obtenerEstadisticas();
       if (statsResult['success'] == true) {
         setState(() {
@@ -109,11 +111,10 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
   }
 
   Future<void> _iniciarJornada() async {
-    // ✅ usa la mesa real asignada al usuario
     final result = await JornadaRepository.iniciarJornada(
       mesa: widget.usuarioMesa,
-      usuarioUsername: widget.usuarioUsername, // opcional (logs)
-      usuarioNombre: widget.usuarioNombre, // opcional (logs)
+      usuarioUsername: widget.usuarioUsername,
+      usuarioNombre: widget.usuarioNombre,
     );
 
     if (result['success'] == true) {
@@ -138,7 +139,7 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
   Future<void> _finalizarJornada() async {
     final result = await JornadaRepository.finalizarJornada(
       mesa: widget.usuarioMesa,
-      usuarioUsername: widget.usuarioUsername, // opcional (logs)
+      usuarioUsername: widget.usuarioUsername,
     );
 
     if (result['success'] == true) {
@@ -512,17 +513,21 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
   }
 
   Widget _buildEstadisticasSection() {
-    final totalHoras = historialJornadas
+    // Calcular estadísticas solo de la mesa actual
+    final totalHorasMesa = historialJornadas
         .where((j) => j.horasTrabajadas != null)
         .fold(0.0, (sum, j) => sum + (j.horasTrabajadas ?? 0));
 
-    final totalBonches = rendimientos.fold(0, (sum, r) => sum + r.bonches);
+    final totalBonchesMesa = rendimientosMesaActual.fold(
+      0,
+      (sum, r) => sum + r.bonches,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'ESTADÍSTICAS',
+          'ESTADÍSTICAS - MESA ${widget.usuarioMesa}',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -531,11 +536,10 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
         ),
         SizedBox(height: 10),
         SizedBox(
-          // <-- AÑADÍ UN SIZEDBOX CON ALTURA FIJA
-          height: 180, // Altura suficiente para las 4 tarjetas
+          height: 180,
           child: GridView.count(
             shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(), // Sin scroll interno
+            physics: NeverScrollableScrollPhysics(),
             crossAxisCount: 2,
             crossAxisSpacing: 15,
             mainAxisSpacing: 15,
@@ -548,20 +552,20 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
                 color: Colors.blue,
               ),
               _buildStatCard(
-                title: 'Horas',
-                value: totalHoras.toStringAsFixed(1),
+                title: 'Horas Trab.',
+                value: totalHorasMesa.toStringAsFixed(1),
                 icon: Icons.access_time,
                 color: Colors.green,
               ),
               _buildStatCard(
                 title: 'Rendimientos',
-                value: rendimientos.length.toString(),
+                value: rendimientosMesaActual.length.toString(),
                 icon: Icons.assessment,
                 color: Colors.orange,
               ),
               _buildStatCard(
-                title: 'Bonches',
-                value: totalBonches.toString(),
+                title: 'Bonches Total',
+                value: totalBonchesMesa.toString(),
                 icon: Icons.leaderboard,
                 color: Colors.purple,
               ),
@@ -582,17 +586,17 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(12), // <-- REDUJE EL PADDING
+        padding: EdgeInsets.all(12),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min, // <-- AÑADÍ ESTO
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 28, color: color), // <-- REDUJE TAMAÑO ICONO
-            SizedBox(height: 6), // <-- REDUJE ESPACIADO
+            Icon(icon, size: 28, color: color),
+            SizedBox(height: 6),
             Text(
               value,
               style: TextStyle(
-                fontSize: 20, // <-- REDUJE TAMAÑO DE TEXTO
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
@@ -603,9 +607,9 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
             Text(
               title,
               style: TextStyle(
-                fontSize: 11, // <-- REDUJE TAMAÑO DE TEXTO
+                fontSize: 11,
                 color: Colors.grey[600],
-                height: 1.2, // <-- AÑADÍ ALTURA DE LÍNEA
+                height: 1.2,
               ),
               textAlign: TextAlign.center,
               maxLines: 2,
@@ -618,15 +622,15 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
   }
 
   Widget _buildRendimientosRecientes() {
-    if (rendimientos.isEmpty) return SizedBox.shrink();
-
-    final rendimientosMostrar = rendimientos.take(5).toList();
+    if (rendimientosMesaActual.isEmpty) {
+      return SizedBox.shrink();
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'RENDIMIENTOS RECIENTES',
+          'RENDIMIENTOS RECIENTES - MESA ${widget.usuarioMesa}',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -634,78 +638,85 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
           ),
         ),
         SizedBox(height: 10),
-        Card(
-          elevation: 3,
-          child: Column(
-            children: rendimientosMostrar.map((rendimiento) {
-              return ListTile(
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10, // <-- REDUJE EL VERTICAL
-                ),
-                leading: Container(
-                  width: 45, // <-- REDUJE TAMAÑO
-                  height: 45,
-                  decoration: BoxDecoration(
-                    color: rendimiento.colorRendimiento.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(10),
+        Container(
+          height: 300, // Altura fija para hacer scroll
+          child: Card(
+            elevation: 3,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: rendimientosMesaActual.length,
+              itemBuilder: (context, index) {
+                final rendimiento = rendimientosMesaActual[index];
+                return ListTile(
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
                   ),
-                  child: Icon(
-                    rendimiento.bonches > 20 ? Icons.star : Icons.work,
-                    color: rendimiento.colorRendimiento,
-                    size: 22, // <-- REDUJE TAMAÑO
+                  leading: Container(
+                    width: 45,
+                    height: 45,
+                    decoration: BoxDecoration(
+                      color: rendimiento.colorRendimiento.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      rendimiento.bonches > 20 ? Icons.star : Icons.work,
+                      color: rendimiento.colorRendimiento,
+                      size: 22,
+                    ),
                   ),
-                ),
-                title: Text(
-                  'Mesa ${rendimiento.numeroMesa}',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                ),
-                subtitle: Text(
-                  '${rendimiento.fechaFormatted} • ${rendimiento.bonches} bonches',
-                  style: TextStyle(fontSize: 13, color: Colors.grey[700]),
-                ),
-                trailing: SizedBox(
-                  // <-- AÑADÍ SIZEDBOX PARA TRAILING
-                  width: 80, // <-- ANCHO FIJO
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '${rendimiento.rendimientoPorHora}/h',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: rendimiento.colorRendimiento,
-                          fontSize: 13,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: 3),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: rendimiento.colorRendimiento.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          rendimiento.nivelRendimiento,
+                  title: Text(
+                    '${rendimiento.fechaFormatted}',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                  ),
+                  subtitle: Text(
+                    '${rendimiento.bonches} bonches • ${rendimiento.horaInicioFormatted ?? ''}',
+                    style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                  ),
+                  trailing: SizedBox(
+                    width: 80,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${rendimiento.rendimientoPorHora}/h',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
                             color: rendimiento.colorRendimiento,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                        SizedBox(height: 3),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: rendimiento.colorRendimiento.withOpacity(
+                              0.1,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            rendimiento.nivelRendimiento,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: rendimiento.colorRendimiento,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            }).toList(),
+                );
+              },
+            ),
           ),
         ),
       ],
@@ -715,8 +726,6 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
   Widget _buildHistorialJornadas() {
     if (historialJornadas.isEmpty) return SizedBox.shrink();
 
-    final jornadasMostrar = historialJornadas.take(5).toList();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -724,73 +733,83 @@ class _RendimientoDashboardState extends State<RendimientoDashboard> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'HISTORIAL DE JORNADAS',
+              'HISTORIAL DE JORNADAS - MESA ${widget.usuarioMesa}',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.blue[900],
               ),
             ),
-            TextButton(onPressed: () {}, child: Text('Ver todo')),
           ],
         ),
         SizedBox(height: 10),
-        ...jornadasMostrar.map((jornada) {
-          return Card(
-            margin: EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 10,
-              ),
-              leading: Container(
-                width: 45,
-                height: 45,
-                decoration: BoxDecoration(
-                  color: jornada.estadoColor.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  jornada.estadoIcon,
-                  color: jornada.estadoColor,
-                  size: 22,
-                ),
-              ),
-              title: Text(
-                jornada.fechaFormatted,
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-              ),
-              subtitle: Text(
-                '${jornada.horaInicioFormatted} - ${jornada.horaFinFormatted ?? "En progreso"}',
-                style: TextStyle(fontSize: 13, color: Colors.grey[700]),
-              ),
-              trailing: SizedBox(
-                width: 60,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (jornada.horasTrabajadas != null)
-                      Text(
-                        '${jornada.horasTrabajadas!.toStringAsFixed(1)}h',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    SizedBox(height: 3),
-                    Text(
-                      jornada.mesa,
-                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-                      overflow: TextOverflow.ellipsis,
+        Container(
+          height: 300, // Altura fija para hacer scroll
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: historialJornadas.length,
+            itemBuilder: (context, index) {
+              final jornada = historialJornadas[index];
+              return Card(
+                margin: EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  leading: Container(
+                    width: 45,
+                    height: 45,
+                    decoration: BoxDecoration(
+                      color: jornada.estadoColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                  ],
+                    child: Icon(
+                      jornada.estadoIcon,
+                      color: jornada.estadoColor,
+                      size: 22,
+                    ),
+                  ),
+                  title: Text(
+                    jornada.fechaFormatted,
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                  ),
+                  subtitle: Text(
+                    '${jornada.horaInicioFormatted} - ${jornada.horaFinFormatted ?? "En progreso"}',
+                    style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                  ),
+                  trailing: SizedBox(
+                    width: 60,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (jornada.horasTrabajadas != null)
+                          Text(
+                            '${jornada.horasTrabajadas!.toStringAsFixed(1)}h',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        SizedBox(height: 3),
+                        Text(
+                          jornada.mesa,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey[600],
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          );
-        }),
+              );
+            },
+          ),
+        ),
       ],
     );
   }
