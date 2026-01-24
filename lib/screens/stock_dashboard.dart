@@ -138,31 +138,129 @@ class _StockDashboardState extends State<StockDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: Text(
-          'Stock Disponible',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      backgroundColor: Colors.black,
+      body: SingleChildScrollView(
+        // HACER TODO DESPLAZABLE
+        child: Column(
+          children: [
+            // ==================== CABECERA ====================
+            Container(
+              color: Colors.black,
+              padding: EdgeInsets.all(25),
+              child: Column(
+                children: [
+                  SizedBox(height: 5),
+
+                  // LOGO GRANDE CENTRADO
+                  SizedBox(
+                    width: 300,
+                    height: 150,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(50),
+                      child: Image.asset(
+                        "assets/logo.jpg",
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 20),
+
+                  // BOTÓN REGRESAR AL INICIO
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.yellow,
+                        foregroundColor: Colors.black,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 15,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.arrow_back, color: Colors.black, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            "Regresar",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 30),
+
+                  // TÍTULO
+                  Text(
+                    "STOCK DISPONIBLE",
+                    style: TextStyle(color: Colors.white, fontSize: 30),
+                  ),
+
+                  SizedBox(height: 40),
+
+                  // TARJETA INFORMATIVA
+                  Card(
+                    color: Colors.grey[900],
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          Icon(Icons.inventory, size: 50, color: Colors.yellow),
+                          SizedBox(height: 10),
+                          Text(
+                            "Control de Stock",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          Text(
+                            "Consulta el stock disponible por variedad y medida",
+                            style: TextStyle(color: Colors.grey, fontSize: 14),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ==================== CONTENIDO PRINCIPAL ====================
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(25),
+                  topRight: Radius.circular(25),
+                ),
+              ),
+              child: isLoading
+                  ? Container(
+                      height: 300,
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  : _buildContenido(),
+            ),
+          ],
         ),
-        backgroundColor: Colors.black,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh, color: Colors.white),
-            onPressed: _cargarDatos,
-          ),
-          IconButton(
-            icon: Icon(Icons.filter_alt, color: Colors.white),
-            onPressed: _mostrarFiltros,
-          ),
-        ],
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : _buildContenido(),
     );
   }
 
@@ -172,7 +270,7 @@ class _StockDashboardState extends State<StockDashboard> {
         // ==================== FILTROS ====================
         if (filtroVariedad.isNotEmpty || filtroMedida.isNotEmpty)
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             color: Colors.blue[50],
             child: Row(
               children: [
@@ -185,20 +283,30 @@ class _StockDashboardState extends State<StockDashboard> {
                 if (filtroVariedad.isNotEmpty)
                   Chip(
                     label: Text('Variedad: $filtroVariedad'),
+                    backgroundColor: Colors.blue[100],
                     onDeleted: () => setState(() => filtroVariedad = ''),
                   ),
                 if (filtroMedida.isNotEmpty)
                   Chip(
                     label: Text('Medida: $filtroMedida'),
+                    backgroundColor: Colors.blue[100],
                     onDeleted: () => setState(() => filtroMedida = ''),
                   ),
                 Spacer(),
-                TextButton(
+                ElevatedButton(
                   onPressed: () => setState(() {
                     filtroVariedad = '';
                     filtroMedida = '';
                   }),
-                  child: Text('Limpiar', style: TextStyle(color: Colors.red)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text('Limpiar', style: TextStyle(fontSize: 12)),
                 ),
               ],
             ),
@@ -207,8 +315,12 @@ class _StockDashboardState extends State<StockDashboard> {
         // ==================== ESTADÍSTICAS ====================
         _buildEstadisticasSection(),
 
-        // ==================== TABLA DE STOCK ====================
-        Expanded(child: _buildTablaStock()),
+        SizedBox(height: 20),
+
+        // ==================== LISTA DE STOCK POR VARIEDAD ====================
+        _buildListaStock(),
+
+        SizedBox(height: 40),
       ],
     );
   }
@@ -227,7 +339,7 @@ class _StockDashboardState extends State<StockDashboard> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.blue[900],
+              color: Colors.black,
             ),
           ),
           SizedBox(height: 12),
@@ -265,143 +377,271 @@ class _StockDashboardState extends State<StockDashboard> {
     required IconData icon,
     required Color color,
   }) {
-    return Column(
-      children: [
-        Container(
-          padding: EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, size: 30, color: color),
-        ),
-        SizedBox(height: 8),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(title, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-      ],
-    );
-  }
-
-  Widget _buildTablaStock() {
-    final agrupadas = _disponibilidadesAgrupadas;
-
-    if (agrupadas.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.inventory, size: 60, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'No hay stock disponible',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+    return Container(
+      width: 100,
+      child: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
-            if (filtroVariedad.isNotEmpty || filtroMedida.isNotEmpty)
-              TextButton(
-                onPressed: () => setState(() {
-                  filtroVariedad = '';
-                  filtroMedida = '';
-                }),
-                child: Text('Limpiar filtros'),
-              ),
-          ],
-        ),
-      );
-    }
-
-    return SingleChildScrollView(
-      child: DataTable(
-        columns: const [
-          DataColumn(label: Text('Variedad')),
-          DataColumn(label: Text('Medida')),
-          DataColumn(label: Text('Stock'), numeric: true),
-          DataColumn(label: Text('Estado')),
-          DataColumn(label: Text('Mesas')),
+            child: Icon(icon, size: 28, color: color),
+          ),
+          SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey[700],
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ],
-        rows: _buildRowsTabla(agrupadas),
       ),
     );
   }
 
-  List<DataRow> _buildRowsTabla(
+  Widget _buildListaStock() {
+    final agrupadas = _disponibilidadesAgrupadas;
+
+    if (agrupadas.isEmpty) {
+      return Container(
+        padding: EdgeInsets.all(20),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.inventory, size: 60, color: Colors.grey[400]),
+              SizedBox(height: 16),
+              Text(
+                'No hay stock disponible',
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              ),
+              SizedBox(height: 20),
+              if (filtroVariedad.isNotEmpty || filtroMedida.isNotEmpty)
+                ElevatedButton(
+                  onPressed: () => setState(() {
+                    filtroVariedad = '';
+                    filtroMedida = '';
+                  }),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text('Limpiar filtros'),
+                ),
+              SizedBox(height: 10),
+              ElevatedButton.icon(
+                onPressed: _mostrarFiltros,
+                icon: Icon(Icons.filter_alt, size: 18),
+                label: Text('Buscar stock'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Stock por Variedad',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue[900],
+                ),
+              ),
+              Spacer(),
+              ElevatedButton.icon(
+                onPressed: _mostrarFiltros,
+                icon: Icon(Icons.filter_alt, size: 16),
+                label: Text('Filtrar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 15),
+
+          // LISTA DE VARIEDADES
+          ..._buildItemsLista(agrupadas),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildItemsLista(
     Map<String, Map<String, List<DisponibilidadModel>>> agrupadas,
   ) {
-    final List<DataRow> rows = [];
+    final List<Widget> items = [];
+    final List<String> variedades = agrupadas.keys.toList()..sort();
 
-    agrupadas.forEach((variedad, medidas) {
-      medidas.forEach((medida, items) {
+    for (final variedad in variedades) {
+      final medidas = agrupadas[variedad]!;
+      final List<String> medidasList = medidas.keys.toList()..sort();
+
+      // Agregar título de variedad
+      items.add(
+        Container(
+          margin: EdgeInsets.only(bottom: 8),
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.blue[50],
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.category, color: Colors.blue, size: 20),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  variedad,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue[900],
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: Icon(Icons.search, size: 18, color: Colors.blue),
+                onPressed: () => _filtrarPorVariedad(variedad),
+                tooltip: 'Filtrar por esta variedad',
+              ),
+            ],
+          ),
+        ),
+      );
+
+      // Agregar medidas de esta variedad
+      for (final medida in medidasList) {
         final stockTotal = _calcularStockTotal(variedad, medida);
-        final mesas = items.map((item) => item.numeroMesa).toSet().toList();
+        final mesas = medidas[medida]!
+            .map((item) => item.numeroMesa)
+            .toSet()
+            .toList();
         final mesasTexto = mesas.length <= 3
             ? mesas.join(', ')
             : '${mesas.take(3).join(', ')}... (+${mesas.length - 3})';
 
-        rows.add(
-          DataRow(
-            cells: [
-              DataCell(
-                Text(variedad),
-                onTap: () => _filtrarPorVariedad(variedad),
-              ),
-              DataCell(Text(medida), onTap: () => _filtrarPorMedida(medida)),
-              DataCell(
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getColorStock(stockTotal).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
+        items.add(
+          Card(
+            margin: EdgeInsets.only(bottom: 8, left: 20),
+            child: ListTile(
+              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              leading: Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: _getColorStock(stockTotal).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
                   child: Text(
                     stockTotal.toString(),
                     style: TextStyle(
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: _getColorStock(stockTotal),
                     ),
                   ),
                 ),
               ),
-              DataCell(
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getColorStock(stockTotal).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    _getNivelStock(stockTotal),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: _getColorStock(stockTotal),
+              title: Text(
+                medida,
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 4),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _getColorStock(stockTotal).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _getNivelStock(stockTotal),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _getColorStock(stockTotal),
+                      ),
                     ),
                   ),
-                ),
+                  SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.table_chart, size: 14, color: Colors.grey),
+                      SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          'Mesas: $mesasTexto',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              DataCell(
-                Tooltip(
-                  message: 'Mesas: ${mesas.join(', ')}',
-                  child: Text(mesasTexto, style: TextStyle(fontSize: 12)),
-                ),
+              trailing: IconButton(
+                icon: Icon(Icons.search, size: 18, color: Colors.blue),
+                onPressed: () => _filtrarPorMedida(medida),
+                tooltip: 'Filtrar por esta medida',
               ),
-            ],
+            ),
           ),
         );
-      });
-    });
+      }
 
-    return rows;
+      items.add(SizedBox(height: 10)); // Espacio entre variedades
+    }
+
+    return items;
   }
 
   Color _getColorStock(int stock) {
     if (stock == 0) return Colors.red;
-    if (stock <= 10) return Colors.orange;
-    if (stock <= 30) return Colors.yellow;
+    if (stock <= 10) return Colors.orange[700]!;
+    if (stock <= 30) return Colors.yellow[700]!;
     return Colors.green;
   }
 
@@ -429,7 +669,16 @@ class _StockDashboardState extends State<StockDashboard> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Filtrar Stock'),
+          title: Row(
+            children: [
+              Icon(Icons.filter_alt, color: Colors.blue),
+              SizedBox(width: 10),
+              Text(
+                'Filtrar Stock',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -438,7 +687,10 @@ class _StockDashboardState extends State<StockDashboard> {
                 decoration: InputDecoration(
                   labelText: 'Variedad',
                   hintText: 'Ej: Rosas, Tulipanes...',
-                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.category),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
               SizedBox(height: 12),
@@ -447,14 +699,21 @@ class _StockDashboardState extends State<StockDashboard> {
                 decoration: InputDecoration(
                   labelText: 'Medida',
                   hintText: 'Ej: 50cm, Grande...',
-                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.straighten),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ],
           ),
           actions: [
-            TextButton(
+            ElevatedButton(
               onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[300],
+                foregroundColor: Colors.black,
+              ),
               child: Text('Cancelar'),
             ),
             ElevatedButton(
@@ -465,6 +724,10 @@ class _StockDashboardState extends State<StockDashboard> {
                 });
                 Navigator.pop(context);
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+              ),
               child: Text('Aplicar Filtros'),
             ),
           ],

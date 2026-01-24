@@ -92,24 +92,20 @@ class _MenuState extends State<Menu> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Header con información del usuario
+              // ==================== LOGO GRANDE CENTRADO ====================
               Container(
-                padding: const EdgeInsets.all(25),
-                decoration: BoxDecoration(
-                  color: Colors.grey[900],
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
-                ),
+                color: Colors.black,
+                padding: EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    // Logo
+                    SizedBox(height: 10),
+
+                    // LOGO GRANDE CENTRADO
                     SizedBox(
-                      width: 120,
+                      width: 280,
                       height: 120,
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(60),
+                        borderRadius: BorderRadius.circular(40),
                         child: Image.asset(
                           "assets/logo.jpg",
                           fit: BoxFit.contain,
@@ -117,46 +113,148 @@ class _MenuState extends State<Menu> {
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
 
-                    // Nombre del usuario
+                    // TÍTULO DE LA APLICACIÓN
                     Text(
-                      _usuarioData['nombre_completo'] ?? 'Usuario',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    // Mesa y cargo
-                    Text(
-                      '${_usuarioData['cargo'] ?? ''} - Mesa ${_usuarioData['mesa'] ?? ''}',
-                      style: const TextStyle(
+                      "CONTROL DE PRODUCCIÓN",
+                      style: TextStyle(
                         color: Colors.yellow,
-                        fontSize: 16,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-
-                    const SizedBox(height: 15),
-
-                    // Usuario
-                    Text(
-                      '@${_usuarioData['username'] ?? ''}',
-                      style: TextStyle(color: Colors.grey[400], fontSize: 14),
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 40),
+              // ==================== INFO DEL USUARIO ELEGANTE ====================
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[900],
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // Avatar del usuario
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.yellow,
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Icon(Icons.person, color: Colors.black, size: 30),
+                    ),
 
-              // Título del menú
-              const Padding(
+                    SizedBox(width: 15),
+
+                    // Información del usuario
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Nombre del usuario
+                          Text(
+                            _usuarioData['nombre_completo'] ?? 'Usuario',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            maxLines: 1,
+                          ),
+
+                          SizedBox(height: 5),
+
+                          // Cargo y mesa
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.work,
+                                size: 14,
+                                color: Colors.grey[400],
+                              ),
+                              SizedBox(width: 5),
+                              Expanded(
+                                child: Text(
+                                  _usuarioData['cargo'] ?? 'Operario',
+                                  style: TextStyle(
+                                    color: Colors.grey[400],
+                                    fontSize: 13,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  maxLines: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          SizedBox(height: 4),
+
+                          // Mesa
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.table_bar,
+                                size: 14,
+                                color: Colors.grey[400],
+                              ),
+                              SizedBox(width: 5),
+                              Text(
+                                'Mesa ${_usuarioData['mesa'] ?? 'N/A'}',
+                                style: TextStyle(
+                                  color: Colors.grey[400],
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          SizedBox(height: 4),
+
+                          // Usuario
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.person_outline,
+                                size: 14,
+                                color: Colors.grey[400],
+                              ),
+                              SizedBox(width: 5),
+                              Text(
+                                '@${_usuarioData['username'] ?? ''}',
+                                style: TextStyle(
+                                  color: Colors.grey[400],
+                                  fontSize: 13,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                maxLines: 1,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 30),
+
+              // ==================== TÍTULO DEL MENÚ ====================
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: 25),
                 child: Align(
                   alignment: Alignment.centerLeft,
@@ -164,147 +262,62 @@ class _MenuState extends State<Menu> {
                     'MENÚ PRINCIPAL',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 24,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
+                      letterSpacing: 1.2,
                     ),
                   ),
                 ),
               ),
 
-              const SizedBox(height: 30),
+              SizedBox(height: 20),
 
-              // Botones del menú
+              // ==================== BOTONES DEL MENÚ MEJORADOS ====================
               Padding(
-                padding: const EdgeInsets.all(25),
+                padding: EdgeInsets.all(25),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    SizedBox(height: 5),
-
-                    SizedBox(
-                      width: 300,
-                      height: 150,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(50),
-                        child: Image.asset(
-                          "assets/logo.jpg",
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(height: 30),
-
                     // Botón RENDIMIENTO
-                    ElevatedButton(
+                    _buildMenuButton(
+                      icon: Icons.assessment,
+                      text: "VER RENDIMIENTO",
+                      color: Colors.blue,
                       onPressed: () {
                         Navigator.pushNamed(context, '/rendimiento');
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.yellow,
-                        foregroundColor: Colors.black,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 35,
-                          vertical: 40,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.assessment, color: Colors.black, size: 24),
-                          SizedBox(width: 10),
-                          Text(
-                            "VER RENDIMIENTO",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
 
-                    SizedBox(height: 50),
+                    SizedBox(height: 20),
 
                     // Botón ETIQUETAS
-                    ElevatedButton(
+                    _buildMenuButton(
+                      icon: Icons.local_offer,
+                      text: "ETIQUETAS",
+                      color: Colors.green,
                       onPressed: () {
                         Navigator.pushNamed(context, '/etiquetas');
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.yellow,
-                        foregroundColor: Colors.black,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 35,
-                          vertical: 40,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.local_offer,
-                            color: Colors.black,
-                            size: 24,
-                          ),
-                          SizedBox(width: 10),
-                          Text(
-                            "ETIQUETAS",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
 
-                    SizedBox(height: 50),
+                    SizedBox(height: 20),
 
                     // Botón STOCK
-                    ElevatedButton(
+                    _buildMenuButton(
+                      icon: Icons.inventory,
+                      text: "STOCK DISPONIBLE",
+                      color: Colors.orange,
                       onPressed: () {
                         Navigator.pushNamed(context, '/stock');
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.yellow,
-                        foregroundColor: Colors.black,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 35,
-                          vertical: 40,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.inventory, color: Colors.black, size: 24),
-                          SizedBox(width: 10),
-                          Text(
-                            "STOCK",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
 
-                    SizedBox(height: 50),
+                    SizedBox(height: 20),
 
-                    // Botón JORNADA (ACTUALIZADO)
-                    ElevatedButton(
+                    // Botón JORNADA
+                    _buildMenuButton(
+                      icon: Icons.schedule,
+                      text: "JORNADA LABORAL",
+                      color: Colors.purple,
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -318,34 +331,9 @@ class _MenuState extends State<Menu> {
                           ),
                         );
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.yellow,
-                        foregroundColor: Colors.black,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 35,
-                          vertical: 40,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.schedule, color: Colors.black, size: 24),
-                          SizedBox(width: 10),
-                          Text(
-                            "JORNADA",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
 
-                    SizedBox(height: 80),
+                    SizedBox(height: 40),
                   ],
                 ),
               ),
@@ -354,32 +342,84 @@ class _MenuState extends State<Menu> {
         ),
       ),
 
-      // Botón CERRAR SESIÓN en el bottom navigation
+      // ==================== BOTÓN CERRAR SESIÓN ====================
       bottomNavigationBar: Container(
-        padding: EdgeInsets.all(10),
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         color: Colors.black,
-        child: ElevatedButton(
+        child: ElevatedButton.icon(
           onPressed: _cerrarSesion,
+          icon: Icon(Icons.exit_to_app, size: 20),
+          label: Text(
+            "Cerrar Sesión",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.red,
             foregroundColor: Colors.white,
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            padding: EdgeInsets.symmetric(vertical: 15),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
             ),
-            minimumSize: Size(double.infinity, 50),
+            elevation: 4,
+            shadowColor: Colors.red.withOpacity(0.3),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.exit_to_app, color: Colors.white, size: 20),
-              SizedBox(width: 8),
-              Text(
-                "Cerrar Sesión",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuButton({
+    required IconData icon,
+    required String text,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      height: 75, // Botones más pequeños y elegantes
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.grey[900],
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          elevation: 3,
+          shadowColor: Colors.black.withOpacity(0.2),
+          side: BorderSide(color: color.withOpacity(0.3), width: 1),
+        ),
+        child: Row(
+          children: [
+            // Icono con fondo circular
+            Container(
+              width: 45,
+              height: 45,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(25),
               ),
-            ],
-          ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+
+            SizedBox(width: 15),
+
+            // Texto del botón
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+
+            // Flecha indicadora
+            Icon(Icons.arrow_forward_ios, color: color, size: 16),
+          ],
         ),
       ),
     );

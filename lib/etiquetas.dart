@@ -78,6 +78,51 @@ class _EtiquetasState extends State<Etiquetas> {
         padding: const EdgeInsets.all(25),
         child: Column(
           children: [
+            // LOGO
+            SizedBox(height: 5),
+            SizedBox(
+              width: 300,
+              height: 150,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(50),
+                child: Image.asset("assets/logo.jpg", fit: BoxFit.contain),
+              ),
+            ),
+
+            SizedBox(height: 20),
+
+            // BOTÓN REGRESAR
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/menu');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.yellow,
+                  foregroundColor: Colors.black,
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.arrow_back, color: Colors.black, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      "Regresar",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
             const SizedBox(height: 30),
             const Text(
               "IMPRIMIR ETIQUETAS",
@@ -155,7 +200,13 @@ class _EtiquetasState extends State<Etiquetas> {
             /// BOTON COMPARTIR
             ElevatedButton(
               onPressed: _compartirEtiqueta,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.yellow),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.yellow,
+                padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
               child: const Text(
                 "COMPARTIR / IMPRIMIR",
                 style: TextStyle(

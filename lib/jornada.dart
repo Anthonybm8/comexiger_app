@@ -20,9 +20,12 @@ class Jornada extends StatefulWidget {
 
 class _JornadaState extends State<Jornada> {
   JornadaModel? _jornadaActual;
+  JornadaModel? _ultimaJornadaFinalizada;
   bool _isLoading = false;
   bool _isLoadingJornada = false;
   String _errorMessage = '';
+  bool _puedeIniciarNuevaJornada = true;
+  String _mensajeBloqueo = '';
 
   @override
   void initState() {
@@ -43,12 +46,16 @@ class _JornadaState extends State<Jornada> {
         mesa: widget.usuarioMesa,
       );
 
-
       if (mounted) {
         if (resultado['success'] == true) {
           final JornadaActualResponse response = resultado['data'];
           setState(() {
             _jornadaActual = response.jornadaActiva;
+            _ultimaJornadaFinalizada = response.ultimaJornada;
+
+            // Verificar si puede iniciar nueva jornada
+            _verificarPuedeIniciarNuevaJornada();
+
             debugPrint('✅ Jornada cargada: ${_jornadaActual?.estado}');
           });
         } else {
@@ -68,6 +75,52 @@ class _JornadaState extends State<Jornada> {
       if (mounted) {
         setState(() => _isLoadingJornada = false);
       }
+    }
+  }
+
+  void _verificarPuedeIniciarNuevaJornada() {
+    // Si ya hay una jornada activa, no puede iniciar otra
+    if (_jornadaActual != null && _jornadaActual!.estaActiva) {
+      setState(() {
+        _puedeIniciarNuevaJornada = false;
+        _mensajeBloqueo = 'Ya tienes una jornada activa';
+      });
+      return;
+    }
+
+    // Si no hay última jornada finalizada, puede iniciar
+    if (_ultimaJornadaFinalizada == null) {
+      setState(() {
+        _puedeIniciarNuevaJornada = true;
+        _mensajeBloqueo = '';
+      });
+      return;
+    }
+
+    // Verificar si la última jornada fue hoy
+    final ultimaFecha = _ultimaJornadaFinalizada!.fechaEntrada;
+    final ahora = DateTime.now();
+
+    final hoy = DateTime(ahora.year, ahora.month, ahora.day);
+    final fechaUltimaJornada = DateTime(
+      ultimaFecha.year,
+      ultimaFecha.month,
+      ultimaFecha.day,
+    );
+
+    // Si la última jornada fue hoy, no puede iniciar otra
+    if (hoy.isAtSameMomentAs(fechaUltimaJornada)) {
+      setState(() {
+        _puedeIniciarNuevaJornada = false;
+        _mensajeBloqueo =
+            'Ya finalizaste tu jornada hoy. Puedes iniciar otra mañana.';
+      });
+    } else {
+      // Si la última jornada fue otro día, puede iniciar
+      setState(() {
+        _puedeIniciarNuevaJornada = true;
+        _mensajeBloqueo = '';
+      });
     }
   }
 
@@ -109,7 +162,6 @@ class _JornadaState extends State<Jornada> {
         mesa: widget.usuarioMesa,
       );
 
-
       if (resultado['success'] == true) {
         _mostrarExito(resultado['message'] ?? 'Jornada finalizada');
         setState(() {
@@ -140,9 +192,44 @@ class _JornadaState extends State<Jornada> {
             "Iniciar Jornada",
             style: TextStyle(color: Colors.yellow, fontWeight: FontWeight.bold),
           ),
-          content: Text(
-            "¿Está seguro de que desea empezar la jornada laboral?\n\nMesa: ${widget.usuarioMesa}",
-            style: TextStyle(color: Colors.white),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "¿Está seguro de que desea empezar la jornada laboral?",
+                style: TextStyle(color: Colors.white),
+              ),
+              SizedBox(height: 10),
+              Text(
+                "Mesa: ${widget.usuarioMesa}",
+                style: TextStyle(
+                  color: Colors.yellow,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 10),
+              if (!_puedeIniciarNuevaJornada && _mensajeBloqueo.isNotEmpty)
+                Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.warning, color: Colors.yellow, size: 20),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _mensajeBloqueo,
+                          style: TextStyle(color: Colors.yellow, fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
           ),
           actions: [
             TextButton(
@@ -158,14 +245,16 @@ class _JornadaState extends State<Jornada> {
               ),
             ),
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _iniciarJornada();
-              },
+              onPressed: _puedeIniciarNuevaJornada
+                  ? () {
+                      Navigator.of(context).pop();
+                      _iniciarJornada();
+                    }
+                  : null,
               child: Text(
                 "SÍ",
                 style: TextStyle(
-                  color: Colors.green,
+                  color: _puedeIniciarNuevaJornada ? Colors.green : Colors.grey,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -200,6 +289,27 @@ class _JornadaState extends State<Jornada> {
                   "Inicio: ${_jornadaActual!.horaInicioFormatted}",
                   style: TextStyle(color: Colors.yellow),
                 ),
+              SizedBox(height: 10),
+              Container(
+                padding: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info, color: Colors.orange, size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "Después de finalizar, no podrás iniciar otra jornada hoy",
+                        style: TextStyle(color: Colors.orange, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
           actions: [
@@ -324,6 +434,68 @@ class _JornadaState extends State<Jornada> {
       );
     }
 
+    // Mostrar advertencia si no puede iniciar nueva jornada
+    if (!_puedeIniciarNuevaJornada &&
+        _jornadaActual == null &&
+        _ultimaJornadaFinalizada != null) {
+      final ultimaFecha = _ultimaJornadaFinalizada!.fechaEntrada;
+      final hoy = DateTime.now();
+      final fechaUltima = DateTime(
+        ultimaFecha.year,
+        ultimaFecha.month,
+        ultimaFecha.day,
+      );
+      final fechaHoy = DateTime(hoy.year, hoy.month, hoy.day);
+
+      if (fechaUltima.isAtSameMomentAs(fechaHoy)) {
+        return Container(
+          margin: EdgeInsets.symmetric(horizontal: 20),
+          padding: EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            color: Colors.orange[900]!.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: Colors.orange),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.warning, color: Colors.orange, size: 24),
+                  SizedBox(width: 10),
+                  Text(
+                    "JORNADA YA FINALIZADA",
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 15),
+              Text(
+                "Hoy ya finalizaste tu jornada laboral.",
+                style: TextStyle(color: Colors.white, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 10),
+              Text(
+                "Última jornada: ${_ultimaJornadaFinalizada!.horaInicioFormatted} - ${_ultimaJornadaFinalizada!.horaFinFormatted ?? 'N/A'}",
+                style: TextStyle(color: Colors.yellow, fontSize: 14),
+              ),
+              SizedBox(height: 10),
+              Text(
+                "Puedes iniciar una nueva jornada mañana.",
+                style: TextStyle(color: Colors.white70, fontSize: 14),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        );
+      }
+    }
+
     if (_jornadaActual != null && _jornadaActual!.estaActiva) {
       final jornada = _jornadaActual!;
       final ahora = DateTime.now();
@@ -408,7 +580,45 @@ class _JornadaState extends State<Jornada> {
       );
     }
 
-    // Si no hay jornada activa
+    // Si no hay jornada activa y puede iniciar nueva
+    if (_puedeIniciarNuevaJornada) {
+      return Container(
+        margin: EdgeInsets.symmetric(horizontal: 20),
+        padding: EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: Colors.grey[700]!),
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.pause_circle_filled, color: Colors.grey, size: 24),
+                SizedBox(width: 10),
+                Text(
+                  "SIN JORNADA ACTIVA",
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 10),
+            Text(
+              "Presiona 'INICIAR JORNADA' para comenzar",
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Estado por defecto
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 20),
       padding: EdgeInsets.all(15),
@@ -613,8 +823,10 @@ class _JornadaState extends State<Jornada> {
                   padding: EdgeInsets.symmetric(horizontal: 10),
                   child: Column(
                     children: [
-                      // Botón INICIAR (solo si no hay jornada activa)
-                      if (_jornadaActual == null || !_jornadaActual!.estaActiva)
+                      // Botón INICIAR (solo si no hay jornada activa y puede iniciar)
+                      if ((_jornadaActual == null ||
+                              !_jornadaActual!.estaActiva) &&
+                          _puedeIniciarNuevaJornada)
                         Container(
                           margin: EdgeInsets.only(bottom: 20),
                           width: double.infinity,
@@ -717,6 +929,53 @@ class _JornadaState extends State<Jornada> {
                                       ),
                                     ],
                                   ),
+                          ),
+                        ),
+
+                      // Mostrar mensaje si no puede iniciar nueva jornada
+                      if (!_puedeIniciarNuevaJornada &&
+                          (_jornadaActual == null ||
+                              !_jornadaActual!.estaActiva))
+                        Container(
+                          margin: EdgeInsets.only(top: 20),
+                          padding: EdgeInsets.all(15),
+                          decoration: BoxDecoration(
+                            color: Colors.orange[900]!.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.orange),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.info,
+                                    color: Colors.orange,
+                                    size: 24,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      "No puedes iniciar nueva jornada hoy",
+                                      style: TextStyle(
+                                        color: Colors.orange,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 10),
+                              Text(
+                                _mensajeBloqueo,
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
                         ),
                     ],
