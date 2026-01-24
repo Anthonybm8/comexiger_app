@@ -6,7 +6,7 @@ import '../models/jornada_model.dart';
 
 class UsuarioRepository {
   // 🎯 URL BASE - SIN 'Usuario/'
-  static const String _baseUrl = "http://192.168.0.106:8000";
+  static const String _baseUrl = "http://192.168.110.99:8000";
 
   // Headers comunes para todas las peticiones
   static final Map<String, String> _headers = {
@@ -156,8 +156,9 @@ class UsuarioRepository {
       print('🔗 URL de prueba: $url');
 
       final client = http.Client();
-      final response =
-          await client.get(url).timeout(const Duration(seconds: 5));
+      final response = await client
+          .get(url)
+          .timeout(const Duration(seconds: 5));
 
       print('📥 Código de estado: ${response.statusCode}');
 
@@ -205,8 +206,9 @@ class UsuarioRepository {
       print('🔗 URL de API: $url');
 
       final client = http.Client();
-      final response =
-          await client.get(url).timeout(const Duration(seconds: 5));
+      final response = await client
+          .get(url)
+          .timeout(const Duration(seconds: 5));
 
       print('📥 Código de estado: ${response.statusCode}');
       print('📥 Respuesta: ${response.body}');
@@ -250,7 +252,10 @@ class UsuarioRepository {
   // ============================================
   static Future<bool> usuarioExiste(String username) async {
     try {
-      final result = await login(username: username, password: 'dummy_password');
+      final result = await login(
+        username: username,
+        password: 'dummy_password',
+      );
 
       if (result['success'] == true) return true;
 
@@ -463,8 +468,9 @@ class UsuarioRepository {
   static Future<Map<String, dynamic>> obtenerJornadaActual({
     required String mesa,
   }) async {
-    final url = Uri.parse('$_baseUrl/api/jornada/actual/')
-        .replace(queryParameters: {'mesa': mesa});
+    final url = Uri.parse(
+      '$_baseUrl/api/jornada/actual/',
+    ).replace(queryParameters: {'mesa': mesa});
 
     print('⏰ [REPOSITORY] Obteniendo jornada actual (POR MESA)');
     print('🔗 URL: $url');
@@ -489,7 +495,10 @@ class UsuarioRepository {
         'message': responseData['error'] ?? 'Error al obtener jornada actual',
       };
     } catch (e) {
-      return {'success': false, 'message': 'Error al obtener jornada actual: $e'};
+      return {
+        'success': false,
+        'message': 'Error al obtener jornada actual: $e',
+      };
     }
   }
 
@@ -500,8 +509,9 @@ class UsuarioRepository {
     required String mesa,
     int limit = 30,
   }) async {
-    final url = Uri.parse('$_baseUrl/api/jornada/historial/')
-        .replace(queryParameters: {'mesa': mesa, 'limit': '$limit'});
+    final url = Uri.parse(
+      '$_baseUrl/api/jornada/historial/',
+    ).replace(queryParameters: {'mesa': mesa, 'limit': '$limit'});
 
     print('⏰ [REPOSITORY] Obteniendo historial de jornadas (POR MESA)');
     print('🔗 URL: $url');

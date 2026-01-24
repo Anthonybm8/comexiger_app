@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import '../models/rendimiento_model.dart';
 
 class RendimientoRepository {
-  static const String _baseUrl = "http://192.168.0.106:8000";
+  static const String _baseUrl = "http://192.168.110.99:8000";
 
   static final Map<String, String> _headers = {
     'Content-Type': 'application/json; charset=UTF-8',

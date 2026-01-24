@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class JornadaRepository {
-  static const String _baseUrl = "http://192.168.0.106:8000";
+  static const String _baseUrl = "http://192.168.110.99:8000";
 
   static final Map<String, String> _headers = {
     'Content-Type': 'application/json; charset=UTF-8',
@@ -16,11 +16,13 @@ class JornadaRepository {
   static Future<Map<String, dynamic>> iniciarJornada({
     required String mesa,
     String? usuarioUsername, // opcional (solo logs / UI)
-    String? usuarioNombre,   // opcional (solo logs / UI)
+    String? usuarioNombre, // opcional (solo logs / UI)
   }) async {
     final url = Uri.parse('$_baseUrl/api/jornada/iniciar/');
 
-    print('🟢 [JORNADA] Iniciando jornada (mesa=$mesa) usuario=${usuarioUsername ?? "-"}');
+    print(
+      '🟢 [JORNADA] Iniciando jornada (mesa=$mesa) usuario=${usuarioUsername ?? "-"}',
+    );
     print('🔗 URL: $url');
 
     try {
@@ -71,7 +73,9 @@ class JornadaRepository {
   }) async {
     final url = Uri.parse('$_baseUrl/api/jornada/finalizar/');
 
-    print('🔴 [JORNADA] Finalizando jornada (mesa=$mesa) usuario=${usuarioUsername ?? "-"}');
+    print(
+      '🔴 [JORNADA] Finalizando jornada (mesa=$mesa) usuario=${usuarioUsername ?? "-"}',
+    );
     print('🔗 URL: $url');
 
     try {
@@ -114,10 +118,13 @@ class JornadaRepository {
     required String mesa,
     String? usuarioUsername, // opcional
   }) async {
-    final url = Uri.parse('$_baseUrl/api/jornada/actual/')
-        .replace(queryParameters: {'mesa': mesa});
+    final url = Uri.parse(
+      '$_baseUrl/api/jornada/actual/',
+    ).replace(queryParameters: {'mesa': mesa});
 
-    print('📊 [JORNADA] Obteniendo jornada actual (mesa=$mesa) usuario=${usuarioUsername ?? "-"}');
+    print(
+      '📊 [JORNADA] Obteniendo jornada actual (mesa=$mesa) usuario=${usuarioUsername ?? "-"}',
+    );
     print('🔗 URL: $url');
 
     try {
@@ -152,10 +159,13 @@ class JornadaRepository {
     int limit = 30,
     String? usuarioUsername, // opcional
   }) async {
-    final url = Uri.parse('$_baseUrl/api/jornada/historial/')
-        .replace(queryParameters: {'mesa': mesa, 'limit': '$limit'});
+    final url = Uri.parse(
+      '$_baseUrl/api/jornada/historial/',
+    ).replace(queryParameters: {'mesa': mesa, 'limit': '$limit'});
 
-    print('📊 [JORNADA] Obteniendo historial (mesa=$mesa) usuario=${usuarioUsername ?? "-"}');
+    print(
+      '📊 [JORNADA] Obteniendo historial (mesa=$mesa) usuario=${usuarioUsername ?? "-"}',
+    );
     print('🔗 URL: $url');
 
     try {
