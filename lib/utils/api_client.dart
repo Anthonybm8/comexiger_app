@@ -8,7 +8,7 @@ import 'usuario_preferences.dart';
 class ApiClient {
   ApiClient._();
 
-  static const String baseUrl = "http://192.168.0.106:8000";
+  static const String baseUrl = "http://10.198.32.101:8000";
 
   static const Map<String, String> _baseHeaders = {
     'Content-Type': 'application/json; charset=UTF-8',

@@ -133,42 +133,6 @@ class Stock extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                SizedBox(height: 20),
-
-                // Botón para ver gráficos
-                ElevatedButton(
-                  onPressed: () {
-                    // Aquí puedes añadir navegación a gráficos si los implementas
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => StockDashboard()),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.bar_chart, size: 24),
-                      SizedBox(width: 10),
-                      Text(
-                        "VER RESUMEN",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
                 SizedBox(
                   height: 40,
                 ), // <-- Espacio extra al final para mejor scroll

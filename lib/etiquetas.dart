@@ -98,15 +98,18 @@ class _EtiquetasState extends State<Etiquetas> {
       final fecha = DateTime.now();
       final idUnico = fecha.microsecondsSinceEpoch
           .toRadixString(16)
-          .toUpperCase();
+          .toUpperCase()
+          .substring(0, 8);
 
       // Obtener solo el número de la mesa
       final numeroMesa = _mesaSeleccionada!.replaceAll('Mesa ', '').trim();
-
+      // Formatear fecha como en Python: dd/mm/yyyy
+      final fechaStr =
+          '${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}';
       setState(() {
         // Formato CORREGIDO con Ñ y ] como separadores
         _qrData =
-            "IDÑ$idUnico ] MesaÑ$numeroMesa ] FlorÑ$_variedadSeleccionada ] MedidaÑ$_medidaSeleccionada ] FechaÑ${fecha.day}-${fecha.month}-${fecha.year}";
+            "ID:$idUnico | Mesa:$numeroMesa | Flor:$_variedadSeleccionada | Medida:$_medidaSeleccionada | Fecha:$fechaStr";
       });
     }
   }

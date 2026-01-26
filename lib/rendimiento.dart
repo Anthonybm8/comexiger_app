@@ -170,7 +170,7 @@ class Rendimiento extends StatelessWidget {
                           Icon(Icons.dashboard, size: 24),
                           SizedBox(width: 10),
                           Text(
-                            "VER DASHBOARD",
+                            "VER MI RENDIMIENTO",
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -181,44 +181,6 @@ class Rendimiento extends StatelessWidget {
                     ),
 
                     SizedBox(height: 20),
-
-                    // Botón para iniciar jornada rápida (sin lógica por ahora)
-                    ElevatedButton(
-                      onPressed: () async {
-                        // Aquí puedes agregar la lógica para iniciar jornada directamente
-                        // usando mesaNormalizada
-                        // Ejemplo:
-                        // await JornadaRepository.iniciarJornada(mesa: mesaNormalizada);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 30,
-                          vertical: 15,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.play_arrow, size: 24),
-                          SizedBox(width: 10),
-                          Text(
-                            "INICIAR JORNADA RÁPIDA",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Agregar espacio extra al final para mejor desplazamiento
-                    SizedBox(height: 30),
                   ],
                 ),
               ),

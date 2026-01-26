@@ -473,10 +473,10 @@ class _JornadaState extends State<Jornada> {
                   Icon(Icons.warning, color: Colors.orange, size: 24),
                   SizedBox(width: 10),
                   Text(
-                    "JORNADA YA FINALIZADA",
+                    "JORNADA FINALIZADA",
                     style: TextStyle(
                       color: Colors.orange,
-                      fontSize: 18,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
