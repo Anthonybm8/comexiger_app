@@ -1,63 +1,52 @@
-// repositories/jornada_repository.dart
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+
+
+import '../utils/api_client.dart';
 
 class JornadaRepository {
-  static const String _baseUrl = "http://192.168.110.99:8000";
-
-  static final Map<String, String> _headers = {
-    'Content-Type': 'application/json; charset=UTF-8',
-    'Accept': 'application/json',
-  };
-
   // ============================================
-  // 1. INICIAR JORNADA  (POR MESA)
+  // 1. INICIAR JORNADA (POR MESA)
   // ============================================
   static Future<Map<String, dynamic>> iniciarJornada({
     required String mesa,
-    String? usuarioUsername, // opcional (solo logs / UI)
-    String? usuarioNombre, // opcional (solo logs / UI)
+    String? usuarioUsername,
+    String? usuarioNombre,
   }) async {
-    final url = Uri.parse('$_baseUrl/api/jornada/iniciar/');
-
-    print(
-      '🟢 [JORNADA] Iniciando jornada (mesa=$mesa) usuario=${usuarioUsername ?? "-"}',
-    );
-    print('🔗 URL: $url');
+    print('🟢 [JORNADA] Iniciando jornada (mesa=$mesa) usuario=${usuarioUsername ?? "-"}');
 
     try {
-      final body = jsonEncode({
-        'mesa': mesa, // ✅ lo que necesita el backend
-      });
+      final res = await ApiClient.post(
+        '/api/jornada/iniciar/',
+        auth: true,
+        body: {'mesa': mesa},
+      );
 
-      final response = await http.post(url, headers: _headers, body: body);
+      final status = res['status'] as int;
+      final responseData = res['data'] as Map<String, dynamic>;
 
-      print('📥 Código: ${response.statusCode}');
-      print('📥 Respuesta: ${response.body}');
+      print('📥 Código: $status');
+      print('📥 Respuesta: $responseData');
 
-      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
-
-      if (response.statusCode == 201) {
-        print('✅ Jornada iniciada correctamente');
+      if (status == 201) {
         return {
           'success': true,
           'message': responseData['message'],
           'data': responseData['data'],
         };
-      } else if (response.statusCode == 400) {
-        print('❌ Error 400: ${responseData['error']}');
+      }
+
+      // backend puede responder 400/409 con jornada activa en "data"
+      if (status == 409 || status == 400) {
         return {
           'success': false,
           'message': responseData['error'] ?? 'No se pudo iniciar jornada',
-          'data': responseData['data'], // ✅ aquí viene la jornada activa
-        };
-      } else {
-        print('⚠️ ERROR: ${response.statusCode}');
-        return {
-          'success': false,
-          'message': responseData['error'] ?? 'Error al iniciar jornada',
+          'data': responseData['data'],
         };
       }
+
+      return {
+        'success': false,
+        'message': responseData['error'] ?? 'Error al iniciar jornada ($status)',
+      };
     } catch (e) {
       print('💥 ERROR: $e');
       return {'success': false, 'message': 'Error de conexión: $e'};
@@ -65,46 +54,39 @@ class JornadaRepository {
   }
 
   // ============================================
-  // 2. FINALIZAR JORNADA  (POR MESA)
+  // 2. FINALIZAR JORNADA (POR MESA)
   // ============================================
   static Future<Map<String, dynamic>> finalizarJornada({
     required String mesa,
-    String? usuarioUsername, // opcional
+    String? usuarioUsername,
   }) async {
-    final url = Uri.parse('$_baseUrl/api/jornada/finalizar/');
-
-    print(
-      '🔴 [JORNADA] Finalizando jornada (mesa=$mesa) usuario=${usuarioUsername ?? "-"}',
-    );
-    print('🔗 URL: $url');
+    print('🔴 [JORNADA] Finalizando jornada (mesa=$mesa) usuario=${usuarioUsername ?? "-"}');
 
     try {
-      final body = jsonEncode({'mesa': mesa}); // ✅ backend pide mesa
+      final res = await ApiClient.post(
+        '/api/jornada/finalizar/',
+        auth: true,
+        body: {'mesa': mesa},
+      );
 
-      final response = await http.post(url, headers: _headers, body: body);
+      final status = res['status'] as int;
+      final responseData = res['data'] as Map<String, dynamic>;
 
-      print('📥 Código: ${response.statusCode}');
-      print('📥 Respuesta: ${response.body}');
+      print('📥 Código: $status');
+      print('📥 Respuesta: $responseData');
 
-      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
-
-      if (response.statusCode == 200) {
-        print('✅ Jornada finalizada correctamente');
+      if (status == 200) {
         return {
           'success': true,
           'message': responseData['message'],
           'data': responseData['data'],
         };
-      } else if (response.statusCode == 400) {
-        print('❌ Error 400: ${responseData['error']}');
-        return {'success': false, 'message': responseData['error']};
-      } else {
-        print('⚠️ ERROR: ${response.statusCode}');
-        return {
-          'success': false,
-          'message': responseData['error'] ?? 'Error al finalizar jornada',
-        };
       }
+
+      return {
+        'success': false,
+        'message': responseData['error'] ?? 'Error al finalizar jornada ($status)',
+      };
     } catch (e) {
       print('💥 ERROR: $e');
       return {'success': false, 'message': 'Error de conexión: $e'};
@@ -112,39 +94,35 @@ class JornadaRepository {
   }
 
   // ============================================
-  // 3. OBTENER JORNADA ACTUAL  (POR MESA)
+  // 3. OBTENER JORNADA ACTUAL (POR MESA)
   // ============================================
   static Future<Map<String, dynamic>> obtenerJornadaActual({
     required String mesa,
-    String? usuarioUsername, // opcional
+    String? usuarioUsername,
   }) async {
-    final url = Uri.parse(
-      '$_baseUrl/api/jornada/actual/',
-    ).replace(queryParameters: {'mesa': mesa});
-
-    print(
-      '📊 [JORNADA] Obteniendo jornada actual (mesa=$mesa) usuario=${usuarioUsername ?? "-"}',
-    );
-    print('🔗 URL: $url');
+    print('📊 [JORNADA] Obteniendo jornada actual (mesa=$mesa) usuario=${usuarioUsername ?? "-"}');
 
     try {
-      final response = await http.get(url, headers: _headers);
+      final res = await ApiClient.get(
+        '/api/jornada/actual/',
+        auth: true,
+        query: {'mesa': mesa},
+      );
 
-      print('📥 Código: ${response.statusCode}');
-      print('📥 Respuesta: ${response.body}');
+      final status = res['status'] as int;
+      final responseData = res['data'] as Map<String, dynamic>;
 
-      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+      print('📥 Código: $status');
+      print('📥 Respuesta: $responseData');
 
-      if (response.statusCode == 200) {
-        print('✅ Jornada actual obtenida correctamente');
+      if (status == 200) {
         return {'success': true, 'data': responseData['data']};
-      } else {
-        print('⚠️ ERROR: ${response.statusCode}');
-        return {
-          'success': false,
-          'message': responseData['error'] ?? 'Error al obtener jornada actual',
-        };
       }
+
+      return {
+        'success': false,
+        'message': responseData['error'] ?? 'Error al obtener jornada actual ($status)',
+      };
     } catch (e) {
       print('💥 ERROR: $e');
       return {'success': false, 'message': 'Error de conexión: $e'};
@@ -152,40 +130,36 @@ class JornadaRepository {
   }
 
   // ============================================
-  // 4. OBTENER HISTORIAL DE JORNADAS  (POR MESA)
+  // 4. OBTENER HISTORIAL (POR MESA)
   // ============================================
   static Future<Map<String, dynamic>> obtenerHistorialJornadas({
     required String mesa,
     int limit = 30,
-    String? usuarioUsername, // opcional
+    String? usuarioUsername,
   }) async {
-    final url = Uri.parse(
-      '$_baseUrl/api/jornada/historial/',
-    ).replace(queryParameters: {'mesa': mesa, 'limit': '$limit'});
-
-    print(
-      '📊 [JORNADA] Obteniendo historial (mesa=$mesa) usuario=${usuarioUsername ?? "-"}',
-    );
-    print('🔗 URL: $url');
+    print('📊 [JORNADA] Obteniendo historial (mesa=$mesa) usuario=${usuarioUsername ?? "-"}');
 
     try {
-      final response = await http.get(url, headers: _headers);
+      final res = await ApiClient.get(
+        '/api/jornada/historial/',
+        auth: true,
+        query: {'mesa': mesa, 'limit': '$limit'},
+      );
 
-      print('📥 Código: ${response.statusCode}');
-      print('📥 Respuesta: ${response.body}');
+      final status = res['status'] as int;
+      final responseData = res['data'] as Map<String, dynamic>;
 
-      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+      print('📥 Código: $status');
+      print('📥 Respuesta: $responseData');
 
-      if (response.statusCode == 200) {
-        print('✅ Historial obtenido correctamente');
+      if (status == 200) {
         return {'success': true, 'data': responseData['data']};
-      } else {
-        print('⚠️ ERROR: ${response.statusCode}');
-        return {
-          'success': false,
-          'message': responseData['error'] ?? 'Error al obtener historial',
-        };
       }
+
+      return {
+        'success': false,
+        'message': responseData['error'] ?? 'Error al obtener historial ($status)',
+      };
     } catch (e) {
       print('💥 ERROR: $e');
       return {'success': false, 'message': 'Error de conexión: $e'};

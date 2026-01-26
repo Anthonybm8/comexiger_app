@@ -1,16 +1,9 @@
-// repositories/disponibilidad_repository.dart
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+
+
+import '../utils/api_client.dart';
 import '../models/disponibilidad_model.dart';
 
 class DisponibilidadRepository {
-  static const String _baseUrl = "http://10.0.2.2:8000";
-
-  static final Map<String, String> _headers = {
-    'Content-Type': 'application/json; charset=UTF-8',
-    'Accept': 'application/json',
-  };
-
   // ============================================
   // 1. OBTENER TODAS LAS DISPONIBILIDADES
   // ============================================
@@ -21,51 +14,46 @@ class DisponibilidadRepository {
     String? ordenar,
     bool? reciente,
   }) async {
-    String url = '$_baseUrl/api/disponibilidades/';
-    final Map<String, String> queryParams = {};
+    final queryParams = <String, String>{};
 
-    if (fecha != null && fecha.isNotEmpty) {
-      queryParams['fecha'] = fecha;
-    }
-    if (desde != null &&
-        hasta != null &&
-        desde.isNotEmpty &&
-        hasta.isNotEmpty) {
+    if (fecha != null && fecha.isNotEmpty) queryParams['fecha'] = fecha;
+
+    if (desde != null && hasta != null && desde.isNotEmpty && hasta.isNotEmpty) {
       queryParams['desde'] = desde;
       queryParams['hasta'] = hasta;
     }
+
     if (ordenar != null && ordenar.isNotEmpty) {
       queryParams['ordenar'] = ordenar;
-      if (reciente != null) {
-        queryParams['reciente'] = reciente.toString();
-      }
-    }
-
-    if (queryParams.isNotEmpty) {
-      final uri = Uri.parse(url).replace(queryParameters: queryParams);
-      url = uri.toString();
+      if (reciente != null) queryParams['reciente'] = reciente.toString();
     }
 
     try {
-      final response = await http.get(Uri.parse(url), headers: _headers);
-      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+      final res = await ApiClient.get(
+        '/api/disponibilidades/',
+        auth: true,
+        query: queryParams.isEmpty ? null : queryParams,
+      );
 
-      if (response.statusCode == 200) {
-        final List<dynamic> disponibilidadesData = responseData;
+      final status = res['status'] as int;
+      final data = res['data'] as Map<String, dynamic>;
+
+      // Tu backend aquí devuelve LISTA (no objeto), así que ApiClient lo empaqueta como {'data': [...]}
+      final rawList = data['data'];
+
+      if (status == 200 && rawList is List) {
         return {
           'success': true,
-          'disponibilidades': disponibilidadesData
-              .map((d) => DisponibilidadModel.fromJson(d))
-              .toList(),
-          'count': disponibilidadesData.length,
-        };
-      } else {
-        return {
-          'success': false,
-          'message':
-              'Error al obtener disponibilidades: ${response.statusCode}',
+          'disponibilidades': rawList.map((d) => DisponibilidadModel.fromJson(d)).toList(),
+          'count': rawList.length,
         };
       }
+
+      return {
+        'success': false,
+        'message': data['error'] ?? 'Error al obtener disponibilidades ($status)',
+        'raw': data,
+      };
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
@@ -75,23 +63,26 @@ class DisponibilidadRepository {
   // 2. OBTENER ESTADÍSTICAS
   // ============================================
   static Future<Map<String, dynamic>> obtenerEstadisticas() async {
-    final url = Uri.parse('$_baseUrl/api/disponibilidades/stats/');
-
     try {
-      final response = await http.get(url, headers: _headers);
-      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+      final res = await ApiClient.get('/api/disponibilidades/stats/', auth: true);
 
-      if (response.statusCode == 200) {
+      final status = res['status'] as int;
+      final data = res['data'] as Map<String, dynamic>;
+
+      if (status == 200) {
+        // aquí tu backend devuelve objeto, no lista
+        final raw = data['data'] ?? data;
         return {
           'success': true,
-          'estadisticas': EstadisticasDisponibilidad.fromJson(responseData),
-        };
-      } else {
-        return {
-          'success': false,
-          'message': 'Error al obtener estadísticas: ${response.statusCode}',
+          'estadisticas': EstadisticasDisponibilidad.fromJson(raw),
         };
       }
+
+      return {
+        'success': false,
+        'message': data['error'] ?? 'Error al obtener estadísticas ($status)',
+        'raw': data,
+      };
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
@@ -100,31 +91,31 @@ class DisponibilidadRepository {
   // ============================================
   // 3. OBTENER DISPONIBILIDADES POR MESA
   // ============================================
-  static Future<Map<String, dynamic>> obtenerDisponibilidadesPorMesa(
-    String mesa,
-  ) async {
-    final url = Uri.parse('$_baseUrl/api/disponibilidad/por_mesa/?mesa=$mesa');
-
+  static Future<Map<String, dynamic>> obtenerDisponibilidadesPorMesa(String mesa) async {
     try {
-      final response = await http.get(url, headers: _headers);
-      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+      final res = await ApiClient.get(
+        '/api/disponibilidad/por_mesa/',
+        auth: true,
+        query: {'mesa': mesa},
+      );
 
-      if (response.statusCode == 200) {
-        final List<dynamic> disponibilidadesData = responseData;
+      final status = res['status'] as int;
+      final data = res['data'] as Map<String, dynamic>;
+      final rawList = data['data'];
+
+      if (status == 200 && rawList is List) {
         return {
           'success': true,
-          'disponibilidades': disponibilidadesData
-              .map((d) => DisponibilidadModel.fromJson(d))
-              .toList(),
-          'count': disponibilidadesData.length,
-        };
-      } else {
-        return {
-          'success': false,
-          'message':
-              'Error al obtener disponibilidades por mesa: ${responseData['error']}',
+          'disponibilidades': rawList.map((d) => DisponibilidadModel.fromJson(d)).toList(),
+          'count': rawList.length,
         };
       }
+
+      return {
+        'success': false,
+        'message': data['error'] ?? 'Error al obtener disponibilidades por mesa ($status)',
+        'raw': data,
+      };
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
@@ -134,28 +125,26 @@ class DisponibilidadRepository {
   // 4. OBTENER DISPONIBILIDADES ACTIVAS
   // ============================================
   static Future<Map<String, dynamic>> obtenerDisponibilidadesActivas() async {
-    final url = Uri.parse('$_baseUrl/api/disponibilidad/activos/');
-
     try {
-      final response = await http.get(url, headers: _headers);
-      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+      final res = await ApiClient.get('/api/disponibilidad/activos/', auth: true);
 
-      if (response.statusCode == 200) {
-        final List<dynamic> disponibilidadesData = responseData;
+      final status = res['status'] as int;
+      final data = res['data'] as Map<String, dynamic>;
+      final rawList = data['data'];
+
+      if (status == 200 && rawList is List) {
         return {
           'success': true,
-          'disponibilidades': disponibilidadesData
-              .map((d) => DisponibilidadModel.fromJson(d))
-              .toList(),
-          'count': disponibilidadesData.length,
-        };
-      } else {
-        return {
-          'success': false,
-          'message':
-              'Error al obtener disponibilidades activas: ${response.statusCode}',
+          'disponibilidades': rawList.map((d) => DisponibilidadModel.fromJson(d)).toList(),
+          'count': rawList.length,
         };
       }
+
+      return {
+        'success': false,
+        'message': data['error'] ?? 'Error al obtener disponibilidades activas ($status)',
+        'raw': data,
+      };
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
@@ -169,40 +158,50 @@ class DisponibilidadRepository {
     required String variedad,
     required String medida,
   }) async {
-    final url = Uri.parse('$_baseUrl/api/disponibilidades/salida/');
-
     try {
-      final body = jsonEncode({
-        'qr_id': qrId,
-        'variedad': variedad,
-        'medida': medida,
-      });
+      final res = await ApiClient.post(
+        '/api/disponibilidades/salida/',
+        auth: true,
+        body: {
+          'qr_id': qrId,
+          'variedad': variedad,
+          'medida': medida,
+        },
+      );
 
-      final response = await http.post(url, headers: _headers, body: body);
-      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+      final status = res['status'] as int;
+      final data = res['data'] as Map<String, dynamic>;
 
-      if (response.statusCode == 200) {
+      // tu backend aquí devuelve objeto de disponibilidad
+      final raw = data['data'] ?? data;
+
+      if (status == 200) {
         return {
           'success': true,
           'message': 'Stock actualizado correctamente',
-          'disponibilidad': DisponibilidadModel.fromJson(responseData),
-        };
-      } else if (response.statusCode == 409) {
-        return {
-          'success': false,
-          'message': responseData['error'] ?? 'Este QR ya fue utilizado',
-        };
-      } else if (response.statusCode == 400) {
-        return {
-          'success': false,
-          'message': responseData['error'] ?? 'Datos incompletos',
-        };
-      } else {
-        return {
-          'success': false,
-          'message': 'Error al registrar salida: ${response.statusCode}',
+          'disponibilidad': DisponibilidadModel.fromJson(raw),
         };
       }
+
+      if (status == 409) {
+        return {
+          'success': false,
+          'message': data['error'] ?? 'Este QR ya fue utilizado',
+        };
+      }
+
+      if (status == 400) {
+        return {
+          'success': false,
+          'message': data['error'] ?? 'Datos incompletos',
+        };
+      }
+
+      return {
+        'success': false,
+        'message': data['error'] ?? 'Error al registrar salida ($status)',
+        'raw': data,
+      };
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión: $e'};
     }

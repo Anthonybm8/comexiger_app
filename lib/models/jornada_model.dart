@@ -91,16 +91,24 @@ class JornadaActualResponse {
   });
 
   factory JornadaActualResponse.fromJson(Map<String, dynamic> json) {
+    // ✅ soporta: activa / jornada_activa
+    final dynamic activaRaw = json['jornada_activa'] ?? json['activa'];
+
+    // ✅ soporta: tiene_jornada_activa o lo calcula
+    final bool tieneActiva =
+        (json['tiene_jornada_activa'] == true) || (activaRaw != null);
+
     return JornadaActualResponse(
-      tieneJornadaActiva: json['tiene_jornada_activa'] ?? false,
-      jornadaActiva: json['jornada_activa'] != null
-          ? JornadaModel.fromJson(json['jornada_activa'])
+      tieneJornadaActiva: tieneActiva,
+      jornadaActiva: activaRaw != null
+          ? JornadaModel.fromJson(activaRaw as Map<String, dynamic>)
           : null,
       ultimaJornada: json['ultima_jornada'] != null
-          ? JornadaModel.fromJson(json['ultima_jornada'])
+          ? JornadaModel.fromJson(json['ultima_jornada'] as Map<String, dynamic>)
           : null,
     );
   }
+
 }
 
 class HistorialJornadasResponse {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/jornada_model.dart';
-import '../repositories/usuario_repository.dart';
+import '../repositories/jornada_repository.dart';
+
 
 class Jornada extends StatefulWidget {
   final String usuarioUsername;
@@ -42,13 +43,18 @@ class _JornadaState extends State<Jornada> {
     }
 
     try {
-      final resultado = await UsuarioRepository.obtenerJornadaActual(
+      final resultado = await JornadaRepository.obtenerJornadaActual(
         mesa: widget.usuarioMesa,
+        usuarioUsername: widget.usuarioUsername,
       );
+
 
       if (mounted) {
         if (resultado['success'] == true) {
-          final JornadaActualResponse response = resultado['data'];
+          final response = JornadaActualResponse.fromJson(
+            resultado['data'] as Map<String, dynamic>,
+          );
+
           setState(() {
             _jornadaActual = response.jornadaActiva;
             _ultimaJornadaFinalizada = response.ultimaJornada;
@@ -128,11 +134,12 @@ class _JornadaState extends State<Jornada> {
     setState(() => _isLoading = true);
 
     try {
-      final resultado = await UsuarioRepository.iniciarJornada(
+      final resultado = await JornadaRepository.iniciarJornada(
+        mesa: widget.usuarioMesa,
         usuarioUsername: widget.usuarioUsername,
         usuarioNombre: widget.usuarioNombre,
-        mesa: widget.usuarioMesa,
       );
+
 
       if (resultado['success'] == true) {
         _mostrarExito(resultado['message'] ?? 'Jornada iniciada');
@@ -158,9 +165,11 @@ class _JornadaState extends State<Jornada> {
     setState(() => _isLoading = true);
 
     try {
-      final resultado = await UsuarioRepository.finalizarJornada(
+      final resultado = await JornadaRepository.finalizarJornada(
         mesa: widget.usuarioMesa,
+        usuarioUsername: widget.usuarioUsername,
       );
+
 
       if (resultado['success'] == true) {
         _mostrarExito(resultado['message'] ?? 'Jornada finalizada');

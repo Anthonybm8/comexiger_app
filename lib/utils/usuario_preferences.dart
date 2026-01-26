@@ -5,9 +5,7 @@ class UsuarioPreferences {
   // ===============================
   // Guardar datos del usuario después del login
   // ===============================
-  static Future<void> guardarUsuarioLogin(
-    Map<String, dynamic> usuarioData,
-  ) async {
+  static Future<void> guardarUsuarioLogin(Map<String, dynamic> usuarioData) async {
     final prefs = await SharedPreferences.getInstance();
 
     await prefs.setString('usuario_id', usuarioData['id']?.toString() ?? '');
@@ -22,6 +20,38 @@ class UsuarioPreferences {
     print('   Usuario: ${usuarioData['username']}');
     print('   Nombre: ${usuarioData['nombres']} ${usuarioData['apellidos']}');
     print('   Mesa: ${usuarioData['mesa']}');
+    print('   Cargo: ${usuarioData['cargo']}');
+  }
+
+  // ===============================
+  // ✅ Guardar tokens (access/refresh)
+  // ===============================
+  static Future<void> guardarTokens({
+    required String access,
+    required String refresh,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('access_token', access);
+    await prefs.setString('refresh_token', refresh);
+    print('✅ Tokens guardados en SharedPreferences');
+  }
+
+  // ===============================
+  // ✅ Obtener access token
+  // ===============================
+  static Future<String?> obtenerAccessToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final t = prefs.getString('access_token');
+    return (t != null && t.trim().isNotEmpty) ? t : null;
+  }
+
+  // ===============================
+  // ✅ Obtener refresh token
+  // ===============================
+  static Future<String?> obtenerRefreshToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final t = prefs.getString('refresh_token');
+    return (t != null && t.trim().isNotEmpty) ? t : null;
   }
 
   // ===============================
@@ -65,6 +95,8 @@ class UsuarioPreferences {
     await prefs.remove('usuario_apellidos');
     await prefs.remove('usuario_mesa');
     await prefs.remove('usuario_cargo');
+    await prefs.remove('access_token');
+    await prefs.remove('refresh_token');
     await prefs.setBool('is_logged_in', false);
 
     print('✅ Datos de usuario eliminados (logout)');
@@ -91,10 +123,18 @@ class UsuarioPreferences {
   }
 
   // ===============================
-  // Obtener mesa  ✅ AHORA NULLABLE
+  // Obtener mesa ✅ AHORA NULLABLE
   // ===============================
   static Future<String?> obtenerMesa() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('usuario_mesa'); // puede ser null
+    return prefs.getString('usuario_mesa');
+  }
+
+  // ===============================
+  // Obtener cargo ✅
+  // ===============================
+  static Future<String?> obtenerCargo() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('usuario_cargo');
   }
 }

@@ -34,36 +34,40 @@ class _InicioSesionState extends State<InicioSesion> {
       );
 
       if (resultado['success'] == true) {
-        final usuarioData = resultado['data'];
+        final Map<String, dynamic> usuarioData =
+            (resultado['data'] ?? {}) as Map<String, dynamic>;
 
-        // Guardar datos del usuario en SharedPreferences
+        // ✅ 1) Guardar datos del usuario
         await UsuarioPreferences.guardarUsuarioLogin(usuarioData);
 
-        _mostrarExito('Bienvenido ${usuarioData['nombres']}');
+        
 
-        // Navegar al menú con verificación de mounted
-        if (mounted) {
-          Future.delayed(const Duration(seconds: 1), () {
-            if (mounted) {
-              Navigator.pushReplacementNamed(context, '/');
-            }
-          });
-        }
+        if (!mounted) return;
+
+        _mostrarExito('Bienvenido ${usuarioData['nombres'] ?? ''}');
+
+        // ✅ IMPORTANTE: apagar loading antes de navegar
+        setState(() => _isLoading = false);
+
+        // Navegar al menú
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/');
+          }
+        });
       } else {
-        if (mounted) {
-          setState(() {
-            _errorMessage = resultado['message'] ?? 'Error desconocido';
-            _isLoading = false;
-          });
-        }
-      }
-    } catch (e) {
-      if (mounted) {
+        if (!mounted) return;
         setState(() {
-          _errorMessage = 'Error de conexión: $e';
+          _errorMessage = resultado['message'] ?? 'Error desconocido';
           _isLoading = false;
         });
       }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Error de conexión: $e';
+        _isLoading = false;
+      });
     }
   }
 
@@ -76,6 +80,13 @@ class _InicioSesionState extends State<InicioSesion> {
         duration: const Duration(seconds: 2),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -170,11 +181,7 @@ class _InicioSesionState extends State<InicioSesion> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(
-                              Icons.error,
-                              color: Colors.red,
-                              size: 20,
-                            ),
+                            const Icon(Icons.error, color: Colors.red, size: 20),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -193,37 +200,22 @@ class _InicioSesionState extends State<InicioSesion> {
                       margin: const EdgeInsets.symmetric(horizontal: 20),
                       child: TextField(
                         controller: _usernameController,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                        ),
+                        style: const TextStyle(color: Colors.white, fontSize: 16),
                         decoration: InputDecoration(
                           hintText: "Usuario",
                           hintStyle: const TextStyle(color: Colors.white70),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.white,
-                              width: 1.5,
-                            ),
+                            borderSide: const BorderSide(color: Colors.white, width: 1.5),
                             borderRadius: BorderRadius.circular(15),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.yellow,
-                              width: 2,
-                            ),
+                            borderSide: const BorderSide(color: Colors.yellow, width: 2),
                             borderRadius: BorderRadius.circular(15),
                           ),
                           fillColor: Colors.white12,
                           filled: true,
-                          prefixIcon: const Icon(
-                            Icons.person,
-                            color: Colors.yellow,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 18,
-                          ),
+                          prefixIcon: const Icon(Icons.person, color: Colors.yellow),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                         ),
                       ),
                     ),
@@ -236,50 +228,31 @@ class _InicioSesionState extends State<InicioSesion> {
                       child: TextField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                        ),
+                        style: const TextStyle(color: Colors.white, fontSize: 16),
                         decoration: InputDecoration(
                           hintText: "Contraseña",
                           hintStyle: const TextStyle(color: Colors.white70),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.white,
-                              width: 1.5,
-                            ),
+                            borderSide: const BorderSide(color: Colors.white, width: 1.5),
                             borderRadius: BorderRadius.circular(15),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Colors.yellow,
-                              width: 2,
-                            ),
+                            borderSide: const BorderSide(color: Colors.yellow, width: 2),
                             borderRadius: BorderRadius.circular(15),
                           ),
                           fillColor: Colors.white12,
                           filled: true,
-                          prefixIcon: const Icon(
-                            Icons.lock,
-                            color: Colors.yellow,
-                          ),
+                          prefixIcon: const Icon(Icons.lock, color: Colors.yellow),
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
+                              _obscurePassword ? Icons.visibility_off : Icons.visibility,
                               color: Colors.yellow,
                             ),
                             onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
+                              setState(() => _obscurePassword = !_obscurePassword);
                             },
                           ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 18,
-                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                         ),
                       ),
                     ),
@@ -296,10 +269,7 @@ class _InicioSesionState extends State<InicioSesion> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.yellow,
                           foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 18,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15),
                           ),
@@ -312,9 +282,7 @@ class _InicioSesionState extends State<InicioSesion> {
                                 width: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.black,
-                                  ),
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
                                 ),
                               )
                             : const Row(
@@ -345,27 +313,12 @@ class _InicioSesionState extends State<InicioSesion> {
                     // Separador
                     const Row(
                       children: [
-                        Expanded(
-                          child: Divider(
-                            color: Colors.white54,
-                            thickness: 1,
-                            height: 40,
-                          ),
-                        ),
+                        Expanded(child: Divider(color: Colors.white54, thickness: 1, height: 40)),
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 15),
-                          child: Text(
-                            "o",
-                            style: TextStyle(color: Colors.white70),
-                          ),
+                          child: Text("o", style: TextStyle(color: Colors.white70)),
                         ),
-                        Expanded(
-                          child: Divider(
-                            color: Colors.white54,
-                            thickness: 1,
-                            height: 40,
-                          ),
-                        ),
+                        Expanded(child: Divider(color: Colors.white54, thickness: 1, height: 40)),
                       ],
                     ),
 
@@ -380,10 +333,7 @@ class _InicioSesionState extends State<InicioSesion> {
                           const Flexible(
                             child: Text(
                               "¿No tienes una cuenta? ",
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 15,
-                              ),
+                              style: TextStyle(color: Colors.white70, fontSize: 15),
                               overflow: TextOverflow.visible,
                             ),
                           ),
@@ -391,10 +341,7 @@ class _InicioSesionState extends State<InicioSesion> {
                             onTap: _isLoading
                                 ? null
                                 : () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/usuarioregistro',
-                                    );
+                                    Navigator.pushNamed(context, '/usuarioregistro');
                                   },
                             child: const Text(
                               "Regístrate aquí",

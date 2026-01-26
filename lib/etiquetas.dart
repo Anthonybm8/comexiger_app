@@ -5,6 +5,9 @@ import 'package:screenshot/screenshot.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'repositories/mesa_repository.dart';
+import 'repositories/variedad_repository.dart';
+
 class Etiquetas extends StatefulWidget {
   const Etiquetas({super.key});
 
@@ -21,9 +24,72 @@ class _EtiquetasState extends State<Etiquetas> {
 
   String _qrData = "Esperando datos...";
 
-  final List<String> _variedades = ['Mandala', 'Fruteto', 'Mondial'];
-  final List<String> _mesas = ['Mesa 1', 'Mesa 2', 'Mesa 3', 'Mesa 4'];
+  List<String> _variedades = [];
+  bool _cargandoVariedades = true;
+
+  List<String> _mesas = [];
+  bool _cargandoMesas = true;
+
   final List<String> _medidas = ['40', '50', '60', '70', '80', '90', 'OPE'];
+  Future<void> _cargarVariedades() async {
+    setState(() => _cargandoVariedades = true);
+
+    final res = await VariedadRepository.obtenerVariedades();
+
+    if (res['success'] == true) {
+      final variedades = (res['variedades'] as List)
+          .map((v) => v.nombre.toString())
+          .toList();
+
+      setState(() {
+        _variedades = variedades;
+        _cargandoVariedades = false;
+
+        // Si ya había una seleccionada pero ya no existe, la limpiamos
+        if (_variedadSeleccionada != null && !_variedades.contains(_variedadSeleccionada)) {
+          _variedadSeleccionada = null;
+        }
+      });
+    } else {
+      setState(() => _cargandoVariedades = false);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(res['message'] ?? 'No se pudieron cargar variedades'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+  Future<void> _cargarMesas() async {
+    setState(() => _cargandoMesas = true);
+
+    final res = await MesaRepository.obtenerMesas();
+
+    if (res['success'] == true) {
+      setState(() {
+        _mesas = List<String>.from(res['mesas']);
+        _cargandoMesas = false;
+
+        if (_mesaSeleccionada != null && !_mesas.contains(_mesaSeleccionada)) {
+          _mesaSeleccionada = null;
+        }
+      });
+    } else {
+      setState(() => _cargandoMesas = false);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(res['message'] ?? 'No se pudieron cargar las mesas'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+
 
   void _actualizarQR() {
     if (_variedadSeleccionada != null &&
@@ -70,6 +136,12 @@ class _EtiquetasState extends State<Etiquetas> {
     await file.writeAsBytes(image);
 
     await Share.shareXFiles([XFile(file.path)], text: 'Etiqueta QR');
+  }
+  @override
+  void initState() {
+    super.initState();
+    _cargarVariedades();
+    _cargarMesas();
   }
 
   @override
@@ -176,18 +248,44 @@ class _EtiquetasState extends State<Etiquetas> {
             const SizedBox(height: 30),
 
             /// VARIEDAD
-            _dropdown("Variedad", _variedades, _variedadSeleccionada, (v) {
-              setState(() => _variedadSeleccionada = v);
-              _actualizarQR();
-            }),
+            _cargandoVariedades
+                ? Container(
+                    padding: const EdgeInsets.all(12),
+                    color: Colors.white,
+                    child: const Row(
+                      children: [
+                        SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+                        SizedBox(width: 12),
+                        Text("Cargando variedades..."),
+                      ],
+                    ),
+                  )
+                : _dropdown("Variedad", _variedades, _variedadSeleccionada, (v) {
+                    setState(() => _variedadSeleccionada = v);
+                    _actualizarQR();
+                  }),
+
 
             const SizedBox(height: 15),
 
             /// MESA
-            _dropdown("Mesa", _mesas, _mesaSeleccionada, (v) {
-              setState(() => _mesaSeleccionada = v);
-              _actualizarQR();
-            }),
+            _cargandoMesas
+                ? Container(
+                    padding: const EdgeInsets.all(12),
+                    color: Colors.white,
+                    child: const Row(
+                      children: [
+                        SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+                        SizedBox(width: 12),
+                        Text("Cargando mesas..."),
+                      ],
+                    ),
+                  )
+                : _dropdown("Mesa", _mesas, _mesaSeleccionada, (v) {
+                    setState(() => _mesaSeleccionada = v);
+                    _actualizarQR();
+                  }),
+
 
             const SizedBox(height: 15),
 

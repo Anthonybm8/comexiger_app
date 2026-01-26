@@ -1,18 +1,12 @@
-// repositories/rendimiento_repository.dart
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+// lib/repositories/rendimiento_repository.dart
+// ignore_for_file: avoid_print
+
+import '../utils/api_client.dart';
 import '../models/rendimiento_model.dart';
 
 class RendimientoRepository {
-  static const String _baseUrl = "http://192.168.110.99:8000";
-
-  static final Map<String, String> _headers = {
-    'Content-Type': 'application/json; charset=UTF-8',
-    'Accept': 'application/json',
-  };
-
   // ============================================
-  // 1. OBTENER TODOS LOS RENDIMIENTOS (CON FILTRO POR MESA)
+  // 1. OBTENER TODOS LOS RENDIMIENTOS (CON FILTROS)
   // ============================================
   static Future<Map<String, dynamic>> obtenerTodosRendimientos({
     String? fecha,
@@ -20,74 +14,68 @@ class RendimientoRepository {
     String? hasta,
     String? ordenar,
     bool? reciente,
-    String? mesa, // <-- NUEVO PARÁMETRO PARA FILTRAR POR MESA
+    String? mesa, // filtro por mesa
   }) async {
-    String url = '$_baseUrl/api/rendimientos/';
-    final Map<String, String> queryParams = {};
+    final queryParams = <String, String>{};
 
-    if (fecha != null && fecha.isNotEmpty) {
-      queryParams['fecha'] = fecha;
-    }
-    if (desde != null &&
-        hasta != null &&
-        desde.isNotEmpty &&
-        hasta.isNotEmpty) {
+    if (fecha != null && fecha.isNotEmpty) queryParams['fecha'] = fecha;
+
+    if (desde != null && hasta != null && desde.isNotEmpty && hasta.isNotEmpty) {
       queryParams['desde'] = desde;
       queryParams['hasta'] = hasta;
     }
+
     if (ordenar != null && ordenar.isNotEmpty) {
       queryParams['ordenar'] = ordenar;
-      if (reciente != null) {
-        queryParams['reciente'] = reciente.toString();
-      }
-    }
-    // FILTRAR POR MESA
-    if (mesa != null && mesa.isNotEmpty) {
-      queryParams['mesa'] = mesa;
+      if (reciente != null) queryParams['reciente'] = reciente.toString();
     }
 
-    if (queryParams.isNotEmpty) {
-      final uri = Uri.parse(url).replace(queryParameters: queryParams);
-      url = uri.toString();
-    }
+    if (mesa != null && mesa.isNotEmpty) queryParams['mesa'] = mesa;
 
     print('📊 [REPOSITORY] Obteniendo rendimientos');
-    print('🔗 URL: $url');
+    print('🧾 Query: $queryParams');
 
     try {
-      final response = await http.get(Uri.parse(url), headers: _headers);
+      final res = await ApiClient.get(
+        '/api/rendimientos/',
+        auth: true,
+        query: queryParams.isEmpty ? null : queryParams,
+      );
 
-      print('📥 Código de estado: ${response.statusCode}');
-      print('📥 Respuesta: ${response.body}');
+      final status = res['status'] as int;
+      final data = res['data'];
 
-      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+      print('📥 Código: $status');
+      print('📥 Respuesta: $data');
 
-      if (response.statusCode == 200) {
-        print('✅ Rendimientos obtenidos correctamente');
-        final List<dynamic> rendimientosData = responseData;
-        return {
-          'success': true,
-          'rendimientos': rendimientosData
-              .map((r) => RendimientoModel.fromJson(r))
-              .toList(),
-          'count': rendimientosData.length,
-        };
-      } else {
-        print('❌ Error al obtener rendimientos');
-        return {
-          'success': false,
-          'message': 'Error al obtener rendimientos: ${response.statusCode}',
-        };
+      // ✅ Tu backend aquí devuelve LISTA (no objeto)
+      // ApiClient la envuelve como: {'data': [ ... ]}
+      if (status == 200) {
+        final rawList = (data is Map<String, dynamic>) ? data['data'] : null;
+
+        if (rawList is List) {
+          return {
+            'success': true,
+            'rendimientos': rawList.map((r) => RendimientoModel.fromJson(r)).toList(),
+            'count': rawList.length,
+          };
+        }
+
+        // si por alguna razón no viene envuelto
+        if (data is List) {
+          return {
+            'success': true,
+            'rendimientos': data.map((r) => RendimientoModel.fromJson(r)).toList(),
+            'count': data.length,
+          };
+        }
       }
-    } on http.ClientException catch (e) {
-      print('💥 CLIENT EXCEPTION: ${e.message}');
-      return {'success': false, 'message': 'Error de conexión: ${e.message}'};
-    } on FormatException catch (e) {
-      print('💥 FORMAT EXCEPTION: ${e.message}');
-      return {'success': false, 'message': 'Error en formato de respuesta'};
+
+      // si falla
+      final msg = (data is Map<String, dynamic>) ? (data['error'] ?? 'Error ($status)') : 'Error ($status)';
+      return {'success': false, 'message': msg, 'raw': data};
     } catch (e) {
-      print('💥 ERROR INESPERADO: $e');
-      return {'success': false, 'message': 'Error inesperado: $e'};
+      return {'success': false, 'message': 'Error al obtener rendimientos: $e'};
     }
   }
 
@@ -95,90 +83,78 @@ class RendimientoRepository {
   // 2. OBTENER ESTADÍSTICAS
   // ============================================
   static Future<Map<String, dynamic>> obtenerEstadisticas() async {
-    final url = Uri.parse('$_baseUrl/api/rendimientos/stats/');
-
-    print('📈 [REPOSITORY] Obteniendo estadísticas');
-    print('🔗 URL: $url');
+    print('📈 [REPOSITORY] Obteniendo estadísticas de rendimientos');
 
     try {
-      final response = await http.get(url, headers: _headers);
+      final res = await ApiClient.get('/api/rendimientos/stats/', auth: true);
 
-      print('📥 Código de estado: ${response.statusCode}');
-      print('📥 Respuesta: ${response.body}');
+      final status = res['status'] as int;
+      final data = res['data'] as Map<String, dynamic>;
 
-      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+      print('📥 Código: $status');
+      print('📥 Respuesta: $data');
 
-      if (response.statusCode == 200) {
-        print('✅ Estadísticas obtenidas correctamente');
+      if (status == 200) {
+        final raw = data['data'] ?? data;
         return {
           'success': true,
-          'estadisticas': EstadisticasRendimiento.fromJson(responseData),
-        };
-      } else {
-        print('❌ Error al obtener estadísticas');
-        return {
-          'success': false,
-          'message': 'Error al obtener estadísticas: ${response.statusCode}',
+          'estadisticas': EstadisticasRendimiento.fromJson(raw),
         };
       }
-    } on http.ClientException catch (e) {
-      print('💥 CLIENT EXCEPTION: ${e.message}');
-      return {'success': false, 'message': 'Error de conexión: ${e.message}'};
-    } on FormatException catch (e) {
-      print('💥 FORMAT EXCEPTION: ${e.message}');
-      return {'success': false, 'message': 'Error en formato de respuesta'};
+
+      return {
+        'success': false,
+        'message': data['error'] ?? 'Error al obtener estadísticas ($status)',
+        'raw': data,
+      };
     } catch (e) {
-      print('💥 ERROR INESPERADO: $e');
-      return {'success': false, 'message': 'Error inesperado: $e'};
+      return {'success': false, 'message': 'Error al obtener estadísticas: $e'};
     }
   }
 
   // ============================================
   // 3. OBTENER RENDIMIENTOS POR MESA
   // ============================================
-  static Future<Map<String, dynamic>> obtenerRendimientosPorMesa(
-    String mesa,
-  ) async {
-    final url = Uri.parse('$_baseUrl/api/rendimiento/por_mesa/?mesa=$mesa');
-
+  static Future<Map<String, dynamic>> obtenerRendimientosPorMesa(String mesa) async {
     print('📊 [REPOSITORY] Obteniendo rendimientos por mesa: $mesa');
-    print('🔗 URL: $url');
 
     try {
-      final response = await http.get(url, headers: _headers);
+      final res = await ApiClient.get(
+        '/api/rendimiento/por_mesa/',
+        auth: true,
+        query: {'mesa': mesa},
+      );
 
-      print('📥 Código de estado: ${response.statusCode}');
-      print('📥 Respuesta: ${response.body}');
+      final status = res['status'] as int;
+      final data = res['data'];
 
-      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+      print('📥 Código: $status');
+      print('📥 Respuesta: $data');
 
-      if (response.statusCode == 200) {
-        print('✅ Rendimientos por mesa obtenidos correctamente');
-        final List<dynamic> rendimientosData = responseData;
-        return {
-          'success': true,
-          'rendimientos': rendimientosData
-              .map((r) => RendimientoModel.fromJson(r))
-              .toList(),
-          'count': rendimientosData.length,
-        };
-      } else {
-        print('❌ Error al obtener rendimientos por mesa');
-        return {
-          'success': false,
-          'message':
-              'Error al obtener rendimientos por mesa: ${responseData['error']}',
-        };
+      if (status == 200) {
+        final rawList = (data is Map<String, dynamic>) ? data['data'] : null;
+
+        if (rawList is List) {
+          return {
+            'success': true,
+            'rendimientos': rawList.map((r) => RendimientoModel.fromJson(r)).toList(),
+            'count': rawList.length,
+          };
+        }
+
+        if (data is List) {
+          return {
+            'success': true,
+            'rendimientos': data.map((r) => RendimientoModel.fromJson(r)).toList(),
+            'count': data.length,
+          };
+        }
       }
-    } on http.ClientException catch (e) {
-      print('💥 CLIENT EXCEPTION: ${e.message}');
-      return {'success': false, 'message': 'Error de conexión: ${e.message}'};
-    } on FormatException catch (e) {
-      print('💥 FORMAT EXCEPTION: ${e.message}');
-      return {'success': false, 'message': 'Error en formato de respuesta'};
+
+      final msg = (data is Map<String, dynamic>) ? (data['error'] ?? 'Error ($status)') : 'Error ($status)';
+      return {'success': false, 'message': msg, 'raw': data};
     } catch (e) {
-      print('💥 ERROR INESPERADO: $e');
-      return {'success': false, 'message': 'Error inesperado: $e'};
+      return {'success': false, 'message': 'Error al obtener rendimientos por mesa: $e'};
     }
   }
 
@@ -186,46 +162,41 @@ class RendimientoRepository {
   // 4. OBTENER RENDIMIENTOS ACTIVOS
   // ============================================
   static Future<Map<String, dynamic>> obtenerRendimientosActivos() async {
-    final url = Uri.parse('$_baseUrl/api/rendimiento/activos/');
-
     print('📊 [REPOSITORY] Obteniendo rendimientos activos');
-    print('🔗 URL: $url');
 
     try {
-      final response = await http.get(url, headers: _headers);
+      final res = await ApiClient.get('/api/rendimiento/activos/', auth: true);
 
-      print('📥 Código de estado: ${response.statusCode}');
-      print('📥 Respuesta: ${response.body}');
+      final status = res['status'] as int;
+      final data = res['data'];
 
-      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+      print('📥 Código: $status');
+      print('📥 Respuesta: $data');
 
-      if (response.statusCode == 200) {
-        print('✅ Rendimientos activos obtenidos correctamente');
-        final List<dynamic> rendimientosData = responseData;
-        return {
-          'success': true,
-          'rendimientos': rendimientosData
-              .map((r) => RendimientoModel.fromJson(r))
-              .toList(),
-          'count': rendimientosData.length,
-        };
-      } else {
-        print('❌ Error al obtener rendimientos activos');
-        return {
-          'success': false,
-          'message':
-              'Error al obtener rendimientos activos: ${response.statusCode}',
-        };
+      if (status == 200) {
+        final rawList = (data is Map<String, dynamic>) ? data['data'] : null;
+
+        if (rawList is List) {
+          return {
+            'success': true,
+            'rendimientos': rawList.map((r) => RendimientoModel.fromJson(r)).toList(),
+            'count': rawList.length,
+          };
+        }
+
+        if (data is List) {
+          return {
+            'success': true,
+            'rendimientos': data.map((r) => RendimientoModel.fromJson(r)).toList(),
+            'count': data.length,
+          };
+        }
       }
-    } on http.ClientException catch (e) {
-      print('💥 CLIENT EXCEPTION: ${e.message}');
-      return {'success': false, 'message': 'Error de conexión: ${e.message}'};
-    } on FormatException catch (e) {
-      print('💥 FORMAT EXCEPTION: ${e.message}');
-      return {'success': false, 'message': 'Error en formato de respuesta'};
+
+      final msg = (data is Map<String, dynamic>) ? (data['error'] ?? 'Error ($status)') : 'Error ($status)';
+      return {'success': false, 'message': msg, 'raw': data};
     } catch (e) {
-      print('💥 ERROR INESPERADO: $e');
-      return {'success': false, 'message': 'Error inesperado: $e'};
+      return {'success': false, 'message': 'Error al obtener rendimientos activos: $e'};
     }
   }
 
@@ -237,63 +208,60 @@ class RendimientoRepository {
     required String numeroMesa,
     String? fechaEntrada,
   }) async {
-    final url = Uri.parse('$_baseUrl/api/rendimientos/');
-
-    print('📊 [REPOSITORY] Creando nuevo rendimiento desde QR');
-    print('🔗 URL: $url');
+    print('📊 [REPOSITORY] Creando rendimiento desde QR');
     print('📋 QR: $qrId, Mesa: $numeroMesa');
 
     try {
-      final body = jsonEncode({
+      final body = <String, dynamic>{
         'qr_id': qrId,
         'numero_mesa': numeroMesa,
-        if (fechaEntrada != null) 'fecha_entrada': fechaEntrada,
-      });
+        if (fechaEntrada != null && fechaEntrada.isNotEmpty) 'fecha_entrada': fechaEntrada,
+      };
 
-      final response = await http.post(url, headers: _headers, body: body);
+      final res = await ApiClient.post(
+        '/api/rendimientos/',
+        auth: true,
+        body: body,
+      );
 
-      print('📥 Código de estado: ${response.statusCode}');
-      print('📥 Respuesta: ${response.body}');
+      final status = res['status'] as int;
+      final data = res['data'];
 
-      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+      print('📥 Código: $status');
+      print('📥 Respuesta: $data');
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        print('✅ Rendimiento creado/actualizado correctamente');
+      // Tu backend aquí parece devolver un objeto rendimiento directo
+      // ApiClient lo envuelve como {'data': {...}} o te devuelve {...}
+      if (status == 201 || status == 200) {
+        final raw = (data is Map<String, dynamic>) ? (data['data'] ?? data) : data;
+
+        if (raw is Map<String, dynamic>) {
+          return {
+            'success': true,
+            'rendimiento': RendimientoModel.fromJson(raw),
+            'message': status == 201 ? 'Nuevo rendimiento creado' : 'Rendimiento actualizado',
+          };
+        }
+
         return {
           'success': true,
-          'rendimiento': RendimientoModel.fromJson(responseData),
-          'message': response.statusCode == 201
-              ? 'Nuevo rendimiento creado'
-              : 'Rendimiento actualizado',
-        };
-      } else if (response.statusCode == 409) {
-        print('❌ QR ya utilizado');
-        return {
-          'success': false,
-          'message': 'Este QR ya fue utilizado anteriormente',
-        };
-      } else if (response.statusCode == 400) {
-        print('❌ Error 400: ${responseData['error']}');
-        return {
-          'success': false,
-          'message': responseData['error'] ?? 'Datos incompletos',
-        };
-      } else {
-        print('⚠️ ERROR: ${response.statusCode}');
-        return {
-          'success': false,
-          'message': 'Error al crear rendimiento: ${response.statusCode}',
+          'message': status == 201 ? 'Nuevo rendimiento creado' : 'Rendimiento actualizado',
         };
       }
-    } on http.ClientException catch (e) {
-      print('💥 CLIENT EXCEPTION: ${e.message}');
-      return {'success': false, 'message': 'Error de conexión: ${e.message}'};
-    } on FormatException catch (e) {
-      print('💥 FORMAT EXCEPTION: ${e.message}');
-      return {'success': false, 'message': 'Error en formato de respuesta'};
+
+      if (status == 409) {
+        return {'success': false, 'message': 'Este QR ya fue utilizado anteriormente'};
+      }
+
+      if (status == 400) {
+        final msg = (data is Map<String, dynamic>) ? (data['error'] ?? 'Datos incompletos') : 'Datos incompletos';
+        return {'success': false, 'message': msg};
+      }
+
+      final msg = (data is Map<String, dynamic>) ? (data['error'] ?? 'Error ($status)') : 'Error ($status)';
+      return {'success': false, 'message': msg, 'raw': data};
     } catch (e) {
-      print('💥 ERROR INESPERADO: $e');
-      return {'success': false, 'message': 'Error inesperado: $e'};
+      return {'success': false, 'message': 'Error al crear rendimiento: $e'};
     }
   }
 }
